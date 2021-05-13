@@ -7,7 +7,8 @@ version_url = api_url + '/versions/latest'
 download_url = api_url + '/versions/{resource_version_id}/download'
 
 resource_metadata = {
-	'EssentialsX': {'id': '9089', 'filetype': 'zip'}
+	'EssentialsX': {'id': '9089', 'filetype': 'zip'},
+	'TownyAdvanced': {'id': '72694', 'filetype': 'zip'}
 }
 
 valid_filetypes = {
@@ -33,23 +34,21 @@ def download_resource(resource_name : str):
 	cwd = os.getcwd()
 	os.chdir(c.plugin_dir)
 	resource_id = resource_metadata[resource_name]['id']
+	resource_filetype = resource_metadata[resource_name]['filetype']
 
 	# Get data about the latest version
 	version_response = make_request(version_url.format(resource_id = resource_id))
 	if version_response == None:
 		return
 
-	version_response_json = version_response.json()
-	resource_version = version_response_json['name']
-	resource_version_id = version_response_json['id']
+	resource_version = version_response.json()['name']
+	resource_version_id = version_response.json()['id']
 
-	filename = f'{resource_name}-{resource_version}'
+	filename = f'{resource_name}-{resource_version}.{resource_filetype}'
 
-	# Check if we have the exact version already
-	for filetype in valid_filetypes:
-		if os.path.exists(filename + '.' + filetype):
-			print('File already exists: ' + os.getcwd() + filename + '.' + filetype)
-			return
+	if os.path.exists(filename):
+		print('File already exists: ' + os.getcwd() + filename)
+		return
 
 	download_response = make_request(download_url.format(
 		resource_id = resource_id,
@@ -77,10 +76,13 @@ def download_resource(resource_name : str):
 	outfile.write(response.content)
 	outfile.close()
 
-	#if filetype == 'zip'
-
+	if resource_filetype == 'zip':
+		pass
 
 
 	os.chdir(cwd)
 
-download_resource('EssentialsX')
+#download_resource('EssentialsX')
+download_resource('TownyAdvanced')
+
+
