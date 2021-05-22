@@ -1,1 +1,1 @@
-from .PluginUpdater import PluginUpdater
+from .PluginConf import PluginConf

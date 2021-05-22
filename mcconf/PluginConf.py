@@ -2,7 +2,7 @@ import requests
 import config as c
 import os
 
-class PluginUpdater:
+class PluginConf:
 	def __init__(self):
 		self.spiget_url = 'https://api.spiget.org/v2/resources/{resource_id}'
 		spiget_download_url = self.spiget_url + '/versions/{resource_version_id}/download'
