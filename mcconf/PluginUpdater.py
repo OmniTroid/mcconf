@@ -5,7 +5,7 @@ import os
 class PluginUpdater:
 	def __init__(self):
 		self.spiget_url = 'https://api.spiget.org/v2/resources/{resource_id}'
-		spiget_download_url = api_url + '/versions/{resource_version_id}/download'
+		spiget_download_url = self.spiget_url + '/versions/{resource_version_id}/download'
 
 		resource_metadata = {
 			'EssentialsX': {'id': '9089', 'filetype': 'zip', 'provider': 'spiget'},
