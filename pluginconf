@@ -11,11 +11,11 @@ pluginconf command [args..]
 Commands:
 
 - download resource_name
-	Downloads latest version of specified resource name.
+	Downloads latest version of given resource name.
 	ex: pluginconf download EssentialsX
 
 - update resource_name
-	Downloads and updates symlink of latest version of specified resource name.
+	Downloads and updates symlink of latest version of given resource name.
 	ex: pluginconf update EssentialsX
 
 - list

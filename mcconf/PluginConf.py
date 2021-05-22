@@ -1,15 +1,26 @@
 import requests
-#import config as c
 import os
 
 class PluginConf:
 	def __init__(self, config : dict):
 		self.config = config
 
+### Utility functions, getters
+
 	def get_resources(self) -> dict:
 		return self.config['resources']
 
-	def make_request(self, url : str, expected_status_code = 200) -> requests.Response:
+	def resource_name_from_id(self, resource_id : str) -> str:
+		for key, value in self.config['resources']:
+			if value['id'] == resource_id:
+				return key
+
+		return ''
+
+### Request functions, returning a requests.Response object
+
+	# Basic wrapper for web requests
+	def request(self, url : str, expected_status_code : int = 200) -> requests.Response:
 		headers = {'User-Agent': 'mcconf plugin updater'}
 
 		response = requests.get(url, headers = headers)
@@ -18,64 +29,62 @@ class PluginConf:
 			print('Web request failed: ' + url)
 			print('Expected code: ' + str(expected_status_code))
 			print('Received code: ' + str(response.status_code))
-			return None
 
 		return response
 
-	# Gets data about the latest version of a given resource id
-	# As a dictionary
-	# Dictionary is empty on failure
-	def spiget_latest_version_data(self, resource_id : str) -> dict:
-		url = self.config['providers']['spiget']['latest_version_data_url']
-		response = self.make_request(url.format(resource_id = resource_id))
-		if response == None:
-			return {}
+	# Sends a request to download from given provider given resource with specific version id
+	# Returns a response object
+	def request_resource_download(self, provider : str, resource_id : str, resource_version_id : str) -> requests.Response:
+		#cwd = os.getcwd()
+		#os.chdir(self.config['plugin_dir'])
 
-		return response.json()
+		#filename = f'{resource_name}-{resource_version}.{resource_filetype}'
 
-	# Downloads specified resource to current directory
-	def download_resource(self, resource_name : str):
-		cwd = os.getcwd()
-		os.chdir(c.plugin_dir)
-		resource_id = resource_metadata[resource_name]['id']
-		resource_filetype = resource_metadata[resource_name]['filetype']
+		#if os.path.exists(filename):
+		#	print('File already exists: ' + os.getcwd() + filename)
+		#	return
 
-
-
-		filename = f'{resource_name}-{resource_version}.{resource_filetype}'
-
-		if os.path.exists(filename):
-			print('File already exists: ' + os.getcwd() + filename)
-			return
-
-		download_response = make_request(download_url.format(
+		url = self.config[provider]['download_url'].format(
 			resource_id = resource_id,
-			resource_version_id = resource_version_id))
+			resource_version_id = resource_version_id)
 
-		if download_response == None:
-			return
+		return make_request(url)
 
-		filetype = ''
+	# Sends a request to get the latest version data of a given resource id from a given provider
+	# Returns a response object
+	def request_latest_version_data(self, provider : str, resource_id : str) -> requests.Response:
+		url = self.config['providers'][provider]['latest_version_data_url'].format(resource_id = resource_id)
 
-		if headers['Content-Type'] == 'application/zip':
-			filetype = 'zip'
-		else:
-			print('Unknown Content-Type: ' + headers['Content-Type'])
-			return
+		return self.make_request(url.format(resource_id = resource_id))
 
-		if not path.exists(resource_name):
-			os.mkdir(resource_name)
+### Other
 
-		os.chdir(resource_name)
+	def download_resource(self):
+		pass
+		#if download_response == None:
+		#	return
 
-		filename = f'{filename}.{filetype}'
+		#filetype = ''
 
-		outfile = open(filename, 'wb')
-		outfile.write(response.content)
-		outfile.close()
+		#if headers['Content-Type'] == 'application/zip':
+		#	filetype = 'zip'
+		#else:
+		#	print('Unknown Content-Type: ' + headers['Content-Type'])
+		#	return
 
-		if resource_filetype == 'zip':
-			pass
+		#if not path.exists(resource_name):
+		#	os.mkdir(resource_name)
+
+		#os.chdir(resource_name)
+
+		#filename = f'{filename}.{filetype}'
+
+		#outfile = open(filename, 'wb')
+		#outfile.write(response.content)
+		#outfile.close()
+
+		#if resource_filetype == 'zip':
+		#	pass
 
 
-		os.chdir(cwd)
+		#os.chdir(cwd)
