@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+
+import mcconf
+import config as c
+import sys
+
+def print_help():
+	print('''
+pluginconf command [args..]
+
+Commands:
+
+- download resource_name
+	Downloads latest version of specified resource name.
+	ex: pluginconf download EssentialsX
+
+- update resource_name
+	Downloads and updates symlink of latest version of specified resource name.
+	ex: pluginconf update EssentialsX
+
+- list
+	Lists configured resources (plugins)
+	''')
+
+def list_resources():
+	pass
+
+if __name__ == '__main__':
+	if len(sys.argv) < 2:
+		print_help()
+		exit()
+
+	command = sys.argv[1]
+
+	if command == 'list':
+		list_resources()
