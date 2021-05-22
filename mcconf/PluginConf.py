@@ -1,21 +1,13 @@
 import requests
-import config as c
+#import config as c
 import os
 
 class PluginConf:
-	def __init__(self):
-		self.spiget_url = 'https://api.spiget.org/v2/resources/{resource_id}'
-		spiget_download_url = self.spiget_url + '/versions/{resource_version_id}/download'
+	def __init__(self, config : dict):
+		self.config = config
 
-		resource_metadata = {
-			'EssentialsX': {'id': '9089', 'filetype': 'zip', 'provider': 'spiget'},
-			'TownyAdvanced': {'id': '72694', 'filetype': 'zip', 'provider': 'spiget'},
-			'LuckPerms': {'id': '28140', 'filetype': 'jar', 'provider': 'spiget'},
-			'Vault': {'id': '34315', 'filetype': 'jar', 'provider': 'spiget'},
-			'WorldEdit': {'id': 'worldedit', 'filetype': 'jar', 'provider': 'bukkit'},
-			'WorldBorder': {'id': '60905', 'filetype':'jar', 'provider': 'spiget'},
-			'WorldGuard': {'id': 'worldguard', 'filetype': 'jar', 'provider': 'bukkit'}
-		}
+	def get_resources(self) -> dict:
+		return self.config['resources']
 
 	def make_request(self, url : str, expected_status_code = 200) -> requests.Response:
 		headers = {'User-Agent': 'mcconf plugin updater'}
@@ -31,18 +23,15 @@ class PluginConf:
 		return response
 
 	# Gets data about the latest version of a given resource id
-	def spiget_latest_version(self, resource_id : str):
-		spiget_version_url = self.spiget_url + '/versions/latest'
-		vresponse = self.make_request(version_url.format(resource_id = resource_id))
+	# As a dictionary
+	# Dictionary is empty on failure
+	def spiget_latest_version_data(self, resource_id : str) -> dict:
+		url = self.config['providers']['spiget']['latest_version_data_url']
+		response = self.make_request(url.format(resource_id = resource_id))
 		if response == None:
-			return
+			return {}
 
-		print(response.json())
-
-		return
-
-		resource_version = version_response.json()['name']
-		resource_version_id = version_response.json()['id']
+		return response.json()
 
 	# Downloads specified resource to current directory
 	def download_resource(self, resource_name : str):

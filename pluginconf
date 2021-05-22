@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import mcconf
-import config as c
+import config
 import sys
 
 def print_help():
@@ -22,15 +22,18 @@ Commands:
 	Lists configured resources (plugins)
 	''')
 
-def list_resources():
-	pass
+def list_resources(pc : mcconf.PluginConf):
+	for key, value in pc.get_resources().items():
+		print(key)
 
 if __name__ == '__main__':
 	if len(sys.argv) < 2:
 		print_help()
 		exit()
 
+	pc = mcconf.PluginConf(config.config)
+
 	command = sys.argv[1]
 
 	if command == 'list':
-		list_resources()
+		list_resources(pc)
