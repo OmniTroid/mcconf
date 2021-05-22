@@ -7,13 +7,13 @@ version_url = api_url + '/versions/latest'
 download_url = api_url + '/versions/{resource_version_id}/download'
 
 resource_metadata = {
-	'EssentialsX': {'id': '9089', 'filetype': 'zip'},
-	'TownyAdvanced': {'id': '72694', 'filetype': 'zip'}
-}
-
-valid_filetypes = {
-	'zip',
-	'jar'
+	'EssentialsX': {'id': '9089', 'filetype': 'zip', 'provider': 'spiget'},
+	'TownyAdvanced': {'id': '72694', 'filetype': 'zip', 'provider': 'spiget'},
+	'LuckPerms': {'id': '28140', 'filetype': 'jar', 'provider': 'spiget'},
+	'Vault': {'id': '34315', 'filetype': 'jar', 'provider': 'spiget'},
+	'WorldEdit': {'id': 'worldedit', 'filetype': 'jar', 'provider': 'bukkit'},
+	'WorldBorder': {'id': '60905', 'filetype':'jar', 'provider': 'spiget'},
+	'WorldGuard': {'id': 'worldguard', 'filetype': 'jar', 'provider': 'bukkit'}
 }
 
 def make_request(url : str, expected_status_code = 200) -> requests.Response:
