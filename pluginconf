@@ -22,10 +22,6 @@ Commands:
 	Lists configured resources (plugins)
 	''')
 
-def list_resources(pc : mcconf.PluginConf):
-	for key, value in pc.get_resources().items():
-		print(key)
-
 if __name__ == '__main__':
 	if len(sys.argv) < 2:
 		print_help()
@@ -36,4 +32,7 @@ if __name__ == '__main__':
 	command = sys.argv[1]
 
 	if command == 'list':
-		list_resources(pc)
+		pc.list_resources()
+	elif command == 'download':
+		pass
+

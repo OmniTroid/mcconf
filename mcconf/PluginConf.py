@@ -10,6 +10,10 @@ class PluginConf:
 	def get_resources(self) -> dict:
 		return self.config['resources']
 
+	def list_resources(self):
+		for key, value in self.get_resources().items():
+			print(key)
+
 	def resource_name_from_id(self, resource_id : str) -> str:
 		for key, value in self.config['resources']:
 			if value['id'] == resource_id:
