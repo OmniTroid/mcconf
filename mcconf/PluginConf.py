@@ -1,13 +1,53 @@
 import requests
 import os
+import sys
 
-from .exceptions import (ResourceNotConfigured)
+from .exceptions import (ResourceNotConfigured, ArgumentMissing, CommandUnknown)
 
 class PluginConf:
 	def __init__(self, config : dict):
 		self.config = config
 
+# Entry point from command line
+
+	def start(self):
+		if len(sys.argv) < 2:
+			self.print_help()
+			exit()
+
+		command = sys.argv[1]
+
+		if command == 'list':
+			self.list_resources()
+		elif command == 'download':
+			if len(sys.argv) < 3:
+				raise ArgumentMissing('resource_name')
+
+			resource_name = sys.argv[2]
+
+			self.download_resource(resource_name)
+		else:
+			raise CommandUnknown(command)
+
 ### Utility functions, getters
+
+	def print_help(self):
+		print('''
+pluginconf command [args..]
+
+Commands:
+
+- download resource_name
+	Downloads latest version of given resource name.
+	ex: pluginconf download EssentialsX
+
+- update resource_name
+	Downloads and updates symlink of latest version of given resource name.
+	ex: pluginconf update EssentialsX
+
+- list
+	Lists configured resources (plugins)
+''')
 
 	def get_resources(self) -> dict:
 		return self.config['resources']

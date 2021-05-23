@@ -4,46 +4,9 @@ import mcconf
 import config
 import sys
 
-def print_help():
-	print('''
-pluginconf command [args..]
-
-Commands:
-
-- download resource_name
-	Downloads latest version of given resource name.
-	ex: pluginconf download EssentialsX
-
-- update resource_name
-	Downloads and updates symlink of latest version of given resource name.
-	ex: pluginconf update EssentialsX
-
-- list
-	Lists configured resources (plugins)
-	''')
-
-def fatal_missing_arg(arg : str):
-	print('Error: missing argument ' + arg)
-	exit()
-
 if __name__ == '__main__':
-	if len(sys.argv) < 2:
-		print_help()
-		exit()
-
 	pc = mcconf.PluginConf(config.config)
+	pc.start()
 
-	command = sys.argv[1]
 
-	if command == 'list':
-		pc.list_resources()
-	elif command == 'download':
-		if len(sys.argv) < 3:
-			fatal_missing_arg('resource_name')
-
-		resource_name = sys.argv[2]
-
-		pc.download_resource(resource_name)
-	else:
-		print('Error: Unknown command: ' + command)
 
