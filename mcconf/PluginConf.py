@@ -24,8 +24,12 @@ class PluginConf:
 				raise ArgumentMissing('resource_name')
 
 			resource_name = sys.argv[2]
+			resource_version = 'latest'
 
-			self.download_resource(resource_name)
+			if len(sys.argv) > 3:
+				resource_version = sys.argv[3]
+
+			self.download_resource(resource_name, resource_version)
 		else:
 			raise CommandUnknown(command)
 
@@ -37,12 +41,13 @@ pluginconf command [args..]
 
 Commands:
 
-- download resource_name
+- download resource_name [resource_version]
 	Downloads latest version of given resource name.
+	If a version is not specified, download latest.
 	ex: pluginconf download EssentialsX
 
 - update resource_name
-	Downloads and updates symlink of latest version of given resource name.
+	Downloads latest version of given resource name and updates symlink
 	ex: pluginconf update EssentialsX
 
 - list
@@ -109,7 +114,7 @@ Commands:
 	def download_resource(self, resource_name : str, resource_version : str = 'latest'):
 		if resource_name not in self.config['resources']:
 			raise ResourceNotConfigured(resource_name)
-		pass
+
 		#if download_response == None:
 		#	return
 
