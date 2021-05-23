@@ -22,6 +22,10 @@ Commands:
 	Lists configured resources (plugins)
 	''')
 
+def fatal_missing_arg(arg : str):
+	print('Error: missing argument ' + arg)
+	exit()
+
 if __name__ == '__main__':
 	if len(sys.argv) < 2:
 		print_help()
@@ -34,5 +38,12 @@ if __name__ == '__main__':
 	if command == 'list':
 		pc.list_resources()
 	elif command == 'download':
-		pass
+		if len(sys.argv) < 3:
+			fatal_missing_arg('resource_name')
+
+		resource_name = sys.argv[2]
+
+		pc.download_resource(resource_name)
+	else:
+		print('Error: Unknown command: ' + command)
 

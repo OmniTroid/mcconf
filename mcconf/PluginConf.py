@@ -1,6 +1,8 @@
 import requests
 import os
 
+from .exceptions import (ResourceNotConfigured)
+
 class PluginConf:
 	def __init__(self, config : dict):
 		self.config = config
@@ -63,7 +65,10 @@ class PluginConf:
 
 ### Other
 
-	def download_resource(self):
+	# Downloads the resource with specified name and version
+	def download_resource(self, resource_name : str, resource_version : str = 'latest'):
+		if resource_name not in self.config['resources']:
+			raise ResourceNotConfigured(resource_name)
 		pass
 		#if download_response == None:
 		#	return
