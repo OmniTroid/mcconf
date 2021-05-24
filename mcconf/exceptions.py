@@ -12,7 +12,7 @@ class CommandUnknown(Error):
 class ResourceNotConfigured(Error):
 	pass
 
-class FunctionalityNotImplemented(Error):
+class FunctionNotImplemented(Error):
 	pass
 
 class ResponseInvalid(Error):

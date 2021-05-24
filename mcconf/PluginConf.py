@@ -1,7 +1,10 @@
-import requests
 import os
 import sys
 
+#import mcconf.webfunctions as webfunctions
+from .Provider import Provider
+from .Spiget import Spiget
+from .Bukkit import Bukkit
 from .exceptions import *
 
 class PluginConf:
@@ -68,58 +71,13 @@ Commands:
 
 		return ''
 
-### Request functions, returning a requests.Response object
-
-	# Basic wrapper for web requests
-	def request(self, url : str, http_method : str = 'GET', expected_status_code : int = 200) -> requests.Response:
-		headers = {'User-Agent': 'mcconf plugin updater'}
-
-		response = requests.request(http_method, url, headers = headers)
-
-		if response.status_code != expected_status_code:
-			print('Web request failed: ' + url)
-			print('Expected code: ' + str(expected_status_code))
-			print('Received code: ' + str(response.status_code))
-
-			raise ResponseInvalid(str(response.status_code))
-
-		return response
-
-	# Sends a request to download from given provider given resource with specific version id
-	# Returns a response object
-	def request_resource_download(self, provider : str, resource_id : str, resource_version_id : str) -> requests.Response:
-		url = self.config[provider]['download_url'].format(
-			resource_id = resource_id,
-			resource_version_id = resource_version_id)
-
-		return make_request(url)
-
-	# Sends a request to get the latest version data of a given resource id from a given provider
-	# Returns a response object
-	def request_latest_version_data(self, provider : str, resource_name : str) -> requests.Response:
-		resource_id = self.config['resources'][resource_name]['id']
-		url = self.config['providers'][provider]['latest_version_data_url'].format(resource_id = resource_id)
-
-		return self.request(url.format(resource_id = resource_id))
-
-	# Gets the latest version number and version id of a given resource
-	def get_latest_version_data(self, resource_name : str) -> [str, str]:
-		provider = self.config['resources'][resource_name]['provider']
-
-		if provider == 'spiget':
-			response = self.request_latest_version_data(provider, resource_name)
-
-			version_number = response.json()['name']
-			version_id = str(response.json()['id'])
-		elif provider == 'bukkit':
-			# For bukkit, we need to GET the webpage with the list of versions
-			# then parse the results, TODO
-			raise FunctionalityNotImplemented('get_latest_version_data for bukkit')
+	def get_provider(self, provider_name : str) -> Provider:
+		if provider_name == 'spiget':
+			return Spiget()
+		elif provider_name == 'bukkit':
+			return Bukkit()
 		else:
-			raise ProviderNotConfigured(provider)
-
-		return [version_number, version_id]
-
+			raise ProviderNotConfigured
 ### Other
 
 	# Downloads the resource with specified name and version
@@ -127,11 +85,12 @@ Commands:
 		if resource_name not in self.config['resources']:
 			raise ResourceNotConfigured(resource_name)
 
-		provider = self.config['resources'][resource_name]['provider']
+		provider_name = self.config['resources'][resource_name]['provider']
+		provider = self.get_provider(provider_name)
 		#resource_id = self.config['resources'][resource_name]['id']
 
 		if resource_version == 'latest':
-			version_number, version_id = self.get_latest_version_data(resource_name)
+			version_number, version_id = provider.get_latest_version_data(resource_name)
 		else:
 			# TODO: implement downloading specific version
 			pass
