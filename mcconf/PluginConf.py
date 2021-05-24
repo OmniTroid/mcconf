@@ -87,13 +87,13 @@ Commands:
 
 		provider_name = self.config['resources'][resource_name]['provider']
 		provider = self.get_provider(provider_name)
-		#resource_id = self.config['resources'][resource_name]['id']
+		resource_id = self.config['resources'][resource_name]['id']
 
 		if resource_version == 'latest':
-			version_number, version_id = provider.get_latest_version_data(resource_name)
+			version_number, version_id = provider.get_latest_version_data(resource_id)
 		else:
-			# TODO: implement downloading specific version
-			pass
+			version_number = resource_version
+			version_id = provider.get_version_id(resource_id, version_number)
 
 		#if download_response == None:
 		#	return
