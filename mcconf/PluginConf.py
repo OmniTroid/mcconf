@@ -95,6 +95,8 @@ Commands:
 			version_number = resource_version
 			version_id = provider.get_version_id(resource_id, version_number)
 
+		provider.request_resource_download(resource_id, version_id)
+
 		#if download_response == None:
 		#	return
 
