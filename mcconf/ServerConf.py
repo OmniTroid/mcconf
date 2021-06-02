@@ -1,11 +1,12 @@
 import os
-import config as c
 
-# Links the relevant launcher and plugins and generates initial state.
-def init_world(world_name : str, launcher_path : str):
-	os.mkdir(world_name)
-	os.chdir(world_name)
+class ServerConf:
+	def __init__(self, config : dict):
+		self.config = config
 
+	# Links the relevant launcher and plugins and generates initial state.
+	def init_server(world_name : str):
+		os.makedirs(config.server_dir, exist_ok=)
 
-if __name__ == '__main__':
-	init_world('test')
+		os.mkdir(world_name)
+		os.chdir(world_name)
