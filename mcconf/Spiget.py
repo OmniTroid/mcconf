@@ -26,6 +26,6 @@ class Spiget(Provider):
 
 	# Gets the latest version number and version id of a given resource
 	def request_resource_download(self, resource_id : str, resource_version_id : str) -> requests.Response:
-		url = self.download_url.format(resource_id = resource_id, resource_version_id = resource_version_id)ß
+		url = self.download_url.format(resource_id = resource_id, resource_version_id = resource_version_id)
 
 		return webfunctions.request(url)

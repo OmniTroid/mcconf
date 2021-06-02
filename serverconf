@@ -2,7 +2,8 @@
 
 import mcconf
 import config
+import test_recipe as tr
 
 if __name__ == '__main__':
-	sc = mcconf.ServerConf(config.config)
-	sc.init_server()
+	sc = mcconf.ServerConf(config.config, tr.test_recipe)
+	sc.init_server('test_server', dry_run=False, verbosity=2)

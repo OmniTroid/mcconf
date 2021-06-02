@@ -20,3 +20,6 @@ class ResponseInvalid(Error):
 
 class ProviderNotConfigured(Error):
 	pass
+
+class ServerExists(Error):
+	pass
