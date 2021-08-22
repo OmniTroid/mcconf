@@ -28,6 +28,7 @@ def main():
 
 	sc = mcconf.ServerConf(args)
 	sc.init_server()
+	#sc.generate_initial_state()
 
 if __name__ == '__main__':
 	main()
