@@ -1,4 +1,4 @@
-config.py
+coreconf.py
 .DS_Store
 *.pyc
 tests/*
