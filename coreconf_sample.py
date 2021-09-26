@@ -1,6 +1,5 @@
 coreconf = {
-	'java': 'java',
-
+	'java_dir': '/data/java',
 	'plugin_dir': '/data/mc/plugins',
 	'launcher_dir': '/data/mc/launchers',
 

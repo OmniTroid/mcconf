@@ -110,8 +110,20 @@ class ServerConf:
 
 		start_script = response.text
 
+		if 'java_version' in self.metaconf:
+			java_version = self.metaconf['java_version']
+		else:
+			java_version = 'latest'
+
+		java_path = Path(self.coreconf['java_dir'], java_version)
+
+		if not java_path.exists():
+			print('WARNING: ' + str(java_path) + ' does not exist')
+
 		memory = str(self.metaconf['memory'])
 		start_script = start_script.replace(
+			'java', str(java_path)
+		).replace(
 			'paperclip.jar',
 			self.metaconf['name'] + '.jar'
 		).replace(
