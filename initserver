@@ -14,11 +14,11 @@ def main():
 		help='Directory which contains server config files.',
 		required=True)
 	parser.add_argument(
-		'--outdir',
-		dest='outdir',
-		metavar='[outdir]',
-		help='Where to put the new server.',
-		default='.')
+		'--serverdir',
+		dest='serverdir',
+		metavar='[serverdir]',
+		help='Directory of the target server',
+		required=True)
 	parser.add_argument(
 		'--dry-run',
 		help='Activate dry run.',

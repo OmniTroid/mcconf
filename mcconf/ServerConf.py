@@ -16,8 +16,8 @@ class ServerConf:
 		self.coreconf = coreconf.coreconf
 		self.system = SystemInterface()
 		self.load_metaconf()
-		self.server_path = Path(args['outdir'], self.metaconf['name']).resolve()
-		self.start_path = Path(self.server_path, 'start.sh').resolve()
+		self.serverdir = Path(args['serverdir']).resolve()
+		self.start_path = Path(self.serverdir, 'start.sh')
 
 	def load_metaconf(self):
 		metaconf_path = Path(self.args['confdir'], 'metaconf.json')
@@ -26,31 +26,69 @@ class ServerConf:
 			self.metaconf = json.loads(file.read())
 
 	def init_server(self):
-		if self.server_path.exists():
-			raise FileExistsError(self.server_path)
+		self.make_serverdir()
+		self.write_eula()
+		self.symlink_launcher()
+		self.setup_plugins()
+		self.make_start_script()
 
-		## Make directory
+		print('Done! Now run the start script to generate the initial state')
+		# TODO: make this work somehow
+		#self.generate_initial_state()
+
+	def make_serverdir(self):
 		print('### Make server directory')
-		self.server_path.mkdir()
-		os.chdir(self.server_path)
+		if self.serverdir.exists():
+			print('INFO: ' + str(self.serverdir) + ' already exists, skipping mkdir step.')
+		else:
+			self.serverdir.mkdir()
 
-		## Symlink launcher
+	def write_eula(self):
+		print('### Write eula file')
+
+		eula_path = Path(self.serverdir, 'eula.txt')
+
+		with open(eula_path, 'w') as file:
+			file.write('eula=true\n')
+
+	def symlink_launcher(self):
 		print('### Symlink launcher')
-		launcher_path = Path(
+		launcher_src = Path(
 			self.coreconf['launcher_dir'],
 			self.metaconf['launcher'],
 			self.metaconf['launcher_version'] + '.jar'
 		)
 
-		os.symlink(launcher_path, self.metaconf['name'] + '.jar')
+		if not launcher_src.exists():
+			print('ERROR: ' + str(launcher_dst) + ' does not exist')
+			raise FileNotFoundError
 
-		## Write eula file
-		print('### Write eula file')
-		with open('eula.txt', 'w') as eula_file:
-			eula_file.write('eula=true\n')
+		launcher_dst = Path(self.serverdir, self.metaconf['name'] + '.jar')
 
-		self.make_start_script()
-		self.generate_initial_state()
+		if launcher_dst.exists():
+			print('INFO: ' + str(launcher_dst) + ' exists, skipping symlink step.')
+		else:
+			os.symlink(launcher_src, launcher_dst)
+
+	def setup_plugins(self):
+		server_plugin_dir = Path(self.serverdir, 'plugins')
+
+		if not server_plugin_dir.exists():
+			server_plugin_dir.mkdir()
+
+		for plugin, plugin_conf in self.metaconf['plugins'].items():
+			plugin_src = Path(self.coreconf['plugin_dir'], plugin, plugin_conf['version'] + '.jar')
+			plugin_dst = Path(server_plugin_dir, plugin + '.jar')
+
+			if not plugin_src.exists():
+				print('WARNING: ' + str(plugin_src) + ' does not exist')
+				continue
+
+			if not plugin_dst.exists():
+				os.symlink(plugin_src, plugin_dst)
+
+
+		# TODO: symlink plugins from coreconf[plugin_dir]
 
 	## Download and modify start script
 	def make_start_script(self):
