@@ -33,7 +33,7 @@ class ServerConf:
 		self.make_start_script()
 
 		print('Done! Now run the start script to generate the initial state')
-		# TODO: make this work somehow
+
 		#self.generate_initial_state()
 
 	def make_serverdir(self):
@@ -53,10 +53,16 @@ class ServerConf:
 
 	def symlink_launcher(self):
 		print('### Symlink launcher')
+
+		if 'launcher_version' in self.metaconf:
+			version = self.metaconf['launcher_version']
+		else:
+			version = 'latest'
+
 		launcher_src = Path(
 			self.coreconf['launcher_dir'],
 			self.metaconf['launcher'],
-			self.metaconf['launcher_version'] + '.jar'
+			version + '.jar'
 		)
 
 		if not launcher_src.exists():
@@ -77,7 +83,12 @@ class ServerConf:
 			server_plugin_dir.mkdir()
 
 		for plugin, plugin_conf in self.metaconf['plugins'].items():
-			plugin_src = Path(self.coreconf['plugin_dir'], plugin, plugin_conf['version'] + '.jar')
+			if 'version' in plugin_conf:
+				version = plugin_conf['version']
+			else:
+				version = 'latest'
+
+			plugin_src = Path(self.coreconf['plugin_dir'], plugin, version + '.jar')
 			plugin_dst = Path(server_plugin_dir, plugin + '.jar')
 
 			if not plugin_src.exists():
@@ -86,9 +97,6 @@ class ServerConf:
 
 			if not plugin_dst.exists():
 				os.symlink(plugin_src, plugin_dst)
-
-
-		# TODO: symlink plugins from coreconf[plugin_dir]
 
 	## Download and modify start script
 	def make_start_script(self):
@@ -134,15 +142,9 @@ class ServerConf:
 		print('Waiting 20 seconds...')
 		time.sleep(20)
 
+		# FIXME: child never responds to kill signal for some reason
+
 		print('Killing server process')
 		child_process.kill()
 
 		print('Initial generation complete.')
-
-	# Links the relevant launcher and plugins and generates initial state.
-
-
-
-	def init_plugins(self):
-		pass
-
