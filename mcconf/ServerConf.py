@@ -102,6 +102,10 @@ class ServerConf:
 	## Download and modify start script
 	def make_start_script(self):
 		print('### Make start script')
+
+		if self.start_path.exists():
+			print('# INFO: ' + str(self.start_path) + ' already exists. Skipping step.')
+
 		response = requests.get(
 			#'http://tiny.cc/mcstart',
 			'https://gist.githubusercontent.com/OmniTroid/267730675631383ce3651155405b3474/raw/95bc84a677df065ebe032eeda5db5c2b72438d59/start.sh',
