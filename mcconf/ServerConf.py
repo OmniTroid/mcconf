@@ -94,9 +94,10 @@ class ServerConf:
 
 			if not plugin_src.exists():
 				print('WARNING: ' + str(plugin_src) + ' does not exist')
-				continue
 
-			if not plugin_dst.exists():
+			if plugin_dst.exists():
+				print('INFO: plugin symlink ' + str(plugin_dst) + ' exists, skipping.')
+			else:
 				os.symlink(plugin_src, plugin_dst)
 
 	## Download and modify start script
