@@ -1,0 +1,3 @@
+[submodule "dictcombiner"]
+	path = dictcombiner
+	url = git@github.com:OmniTroid/dictcombiner.git

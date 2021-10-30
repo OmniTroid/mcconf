@@ -2,4 +2,3 @@ coreconf.py
 .DS_Store
 *.pyc
 tests/*
-dictcombiner
