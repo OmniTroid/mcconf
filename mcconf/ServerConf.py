@@ -5,13 +5,12 @@ import requests
 import subprocess
 import time
 
-import coreconf
-
 from .SystemInterface import SystemInterface
 from .exceptions import *
 
 class ServerConf:
 	def __init__(self, args : dict):
+		import coreconf
 		self.args = args
 		self.coreconf = coreconf.coreconf
 		self.system = SystemInterface()
