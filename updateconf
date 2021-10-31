@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+
+# This script takes an existing Minecraft server and
+# updates the config based on the
+
+import argparse
+
+import mcconf
+
+def main():
+	parser = argparse.ArgumentParser('Minecraft server config updater')
+
+	parser.add_argument(
+		'--confdir',
+		dest='confdir',
+		metavar='[confdir]',
+		help='Directory which contains server config files.',
+		required=True)
+	parser.add_argument(
+		'--serverdir',
+		dest='serverdir',
+		metavar='[serverdir]',
+		help='Directory of the target server',
+		required=True)
+
+	args = vars(parser.parse_args())
+
+	uc = mcconf.UpdateConf(args)
+	uc.update_all()
+	#uc.update_server_properties()
+	#uc.update_plugin_confs()
+	#uc.update_bukkit_yml()
+	#uc.update_spigot_yml()
+
+if __name__ == '__main__':
+	main()
