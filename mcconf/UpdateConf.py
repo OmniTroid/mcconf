@@ -21,11 +21,11 @@ class UpdateConf:
 			return
 
 	def update_all(self):
-		#self.update_server_properties()
-		#self.update_bukkit_yml()
-		#self.update_spigot_yml()
-		#self.update_paper_yml()
-		self.update_plugin_confs()
+		self.update_server_properties()
+		self.update_bukkit_yml()
+		self.update_spigot_yml()
+		self.update_paper_yml()
+		#self.update_plugin_confs()
 
 	def update_server_properties(self):
 		baseconf_path = Path(self.serverdir, 'server.properties')

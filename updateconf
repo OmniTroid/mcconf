@@ -27,10 +27,6 @@ def main():
 
 	uc = mcconf.UpdateConf(args)
 	uc.update_all()
-	#uc.update_server_properties()
-	#uc.update_plugin_confs()
-	#uc.update_bukkit_yml()
-	#uc.update_spigot_yml()
 
 if __name__ == '__main__':
 	main()
