@@ -138,3 +138,15 @@ class UpdateConf:
 		with open(path, 'w') as file:
 			file.write(yaml.dump(data))
 
+### Misc helpers
+
+	# Traverses the given dir and build a fully combined conf tree
+	def dir_to_dict(self, dir_ : Path):
+		if not dir_.exists():
+			raise FileNotFound(dir_)
+			return
+
+		if not dir_.is_dir():
+			raise NotADirectoryError(dir_)
+			return
+
