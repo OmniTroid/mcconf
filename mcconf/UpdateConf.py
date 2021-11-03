@@ -92,12 +92,12 @@ class UpdateConf:
 			[Path(filename) for filename in subconf_dir.iterdir()],
 			key=lambda f: f.name)
 
-		subconfs = []
+		confs = [baseconf]
 
 		for subconf_file in subconf_files:
-			subconfs.append(read_func(subconf_file))
+			confs.append(read_func(subconf_file))
 
-		result_conf = dc.combine_dicts(baseconf, subconfs)
+		result_conf = dc.combine_dicts(confs)
 
 		if not original_path.exists():
 			baseconf_path.rename(original_path)
