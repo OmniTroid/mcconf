@@ -5,6 +5,7 @@ from typing import Callable
 import yaml
 
 import dictcombiner.dictcombiner as dc
+import fs2conf as fc
 
 class UpdateConf:
 	def __init__(self, args):

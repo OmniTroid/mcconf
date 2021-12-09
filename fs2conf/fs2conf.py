@@ -1,8 +1,8 @@
 from pathlib import Path
 import json
 
-import formathandlers as fh
-import dictcombiner as dc
+from . import formathandlers as fh
+from .dictcombiner import utils as dc
 
 # Combine all files in the given directory
 def combine_confs(conf_dir : Path) -> dict:
@@ -48,7 +48,7 @@ def fs2conf(dir_ : Path) -> dict:
 
 		if child.is_file():
 			if child.name.endswith('.json'):
-				subconf = parse_json(child)
+				subconf = fh.parse_json(child)
 
 		elif child.is_dir():
 			# This means the dir contains a set of files to be combined to one

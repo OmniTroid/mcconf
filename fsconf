@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+
+# This script takes an existing Minecraft server and
+# updates the config based on the
+
+import argparse
+from pathlib import Path
+import pprint
+
+import fs2conf
+import dictcombiner.dictcombiner.utils as dc
+
+def fsconf(args):
+	fs_confs = []
+	roles = args['roles'].split(',')
+	role_dir = args['roledir']
+
+	for role in roles:
+		full_role_dir = Path(role_dir, role)
+
+		if not full_role_dir.is_dir():
+			print('Warning: ' + str(full_role_dir) + ' is not a directory')
+			continue
+
+		fs_confs.append(fs2conf.fs2conf(full_role_dir))
+
+	final_conf = dc.combine_dicts(fs_confs)
+
+	pprint.pprint(final_conf)
+
+def main():
+	parser = argparse.ArgumentParser('Minecraft server config updater v2')
+
+	parser.add_argument(
+		'--roledir',
+		dest='roledir',
+		metavar='[roledir]',
+		help='Directory which contains role config files.',
+		required=True)
+	parser.add_argument(
+		'--serverdir',
+		dest='serverdir',
+		metavar='[serverdir]',
+		help='Directory of the target server',
+		required=True)
+	parser.add_argument(
+		'--roles',
+		dest='roles',
+		metavar='[roles]',
+		help='Comma-separated list of roles',
+		required=True)
+
+	args = vars(parser.parse_args())
+
+	fsconf(args)
+
+if __name__ == '__main__':
+	main()
