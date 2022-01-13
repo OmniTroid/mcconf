@@ -8,7 +8,7 @@ import argparse
 import mcconf
 
 def main():
-	parser = argparse.ArgumentParser('Minecraft server config updater')
+	parser = argparse.ArgumentParser('Minecraft server config tool')
 
 	parser.add_argument(
 		'--serverconf',
@@ -28,11 +28,23 @@ def main():
 		metavar='[serverdir]',
 		help='Directory of the target server',
 		required=True)
+	parser.add_argument(
+		'--action',
+		dest='action',
+		metavar='[action]',
+		help='Action to take. Valid actions: init, update',
+		required=True)
 
 	args = vars(parser.parse_args())
 
 	uc = mcconf.UpdateConf(args)
-	#uc.update_all()
+
+	if args['action'] == 'init':
+		uc.init_server()
+	elif args['action'] == 'update':
+		uc.update_all()
+	else:
+		print('Unknown action: ' + args['action'])
 
 if __name__ == '__main__':
 	main()
