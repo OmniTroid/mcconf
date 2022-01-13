@@ -1,8 +1,10 @@
-import configparser
-from pathlib import Path
 import io
-from typing import Callable
 import yaml
+import json
+import configparser
+import pprint
+from pathlib import Path
+from typing import Callable
 
 import dictcombiner.dictcombiner as dc
 import fs2conf as fc
@@ -10,16 +12,35 @@ import fs2conf as fc
 class UpdateConf:
 	def __init__(self, args):
 		self.args = args
-		self.confdir = Path(args['confdir'])
+		self.serverconf = Path(args['serverconf'])
+		self.rolesdir = Path(args['rolesdir'])
 		self.serverdir = Path(args['serverdir'])
+		self.conf = {}
+		self.metaconf = {}
 
-		if not self.confdir.exists():
+		if not self.serverconf.is_file():
 			print('ERROR: ' + confdir + ' does not exist')
-			return
+			raise FileNotFoundError
+
+		if not self.rolesdir.is_dir():
+			print('ERROR: ' + rolesdir + ' does not exist')
+			raise NotADirectoryError
 
 		if not self.serverdir.exists():
 			print('ERROR: ' + serverdir + ' does not exist')
-			return
+			raise NotADirectoryError
+
+		roledirs = [
+			Path(self.rolesdir, role) for role in 
+				json.loads(open(self.serverconf).read())['roles']
+		]
+
+		self.combined_conf = fc.combine_dirs(roledirs)
+
+		pprint.pprint(self.combined_conf)
+
+		self.metaconf = self.combined_conf['metaconf.json']
+		self.conf = self.combined_conf['conf']
 
 	def update_all(self):
 		self.update_server_properties()

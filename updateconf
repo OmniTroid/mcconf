@@ -11,10 +11,16 @@ def main():
 	parser = argparse.ArgumentParser('Minecraft server config updater')
 
 	parser.add_argument(
-		'--confdir',
-		dest='confdir',
-		metavar='[confdir]',
-		help='Directory which contains server config files.',
+		'--serverconf',
+		dest='serverconf',
+		metavar='[serverconf]',
+		help='Path to serverconf.json',
+		required=True)
+	parser.add_argument(
+		'--rolesdir',
+		dest='rolesdir',
+		metavar='[rolesdir]',
+		help='Directory which contains role config files.',
 		required=True)
 	parser.add_argument(
 		'--serverdir',
@@ -26,7 +32,7 @@ def main():
 	args = vars(parser.parse_args())
 
 	uc = mcconf.UpdateConf(args)
-	uc.update_all()
+	#uc.update_all()
 
 if __name__ == '__main__':
 	main()
