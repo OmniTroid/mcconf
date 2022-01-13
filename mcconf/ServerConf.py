@@ -16,6 +16,7 @@ class ServerConf:
 		self.system = SystemInterface()
 		self.load_metaconf()
 		self.serverdir = Path(args['serverdir']).resolve()
+		self.rolesdir = Path(args['rolesdir']).resolve()
 		self.start_path = Path(self.serverdir, 'start.sh')
 
 	def load_metaconf(self):

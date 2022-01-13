@@ -17,17 +17,18 @@ class UpdateConf:
 		self.serverdir = Path(args['serverdir'])
 		self.conf = {}
 		self.metaconf = {}
+		self.action = args['action']
 
 		if not self.serverconf.is_file():
 			print('ERROR: ' + confdir + ' does not exist')
 			raise FileNotFoundError
 
 		if not self.rolesdir.is_dir():
-			print('ERROR: ' + rolesdir + ' does not exist')
+			print('ERROR: ' + self.rolesdir + ' does not exist')
 			raise NotADirectoryError
 
-		if not self.serverdir.exists():
-			print('ERROR: ' + serverdir + ' does not exist')
+		if not self.serverdir.exists() and self.action != 'init':
+			print('ERROR: ' + self.serverdir + ' does not exist')
 			raise NotADirectoryError
 
 		roledirs = [
