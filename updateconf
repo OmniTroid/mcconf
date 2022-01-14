@@ -17,12 +17,6 @@ def main():
 		help='Path to serverconf.json',
 		required=True)
 	parser.add_argument(
-		'--rolesdir',
-		dest='rolesdir',
-		metavar='[rolesdir]',
-		help='Directory which contains role config files.',
-		required=True)
-	parser.add_argument(
 		'--serverdir',
 		dest='serverdir',
 		metavar='[serverdir]',

@@ -1,8 +1,10 @@
 import io
+import os
 import yaml
 import json
 import configparser
 import pprint
+import requests
 from pathlib import Path
 from typing import Callable
 
@@ -11,13 +13,15 @@ import fs2conf as fc
 
 class UpdateConf:
 	def __init__(self, args):
+		import coreconf
 		self.args = args
 		self.serverconf = Path(args['serverconf'])
-		self.rolesdir = Path(args['rolesdir'])
 		self.serverdir = Path(args['serverdir'])
 		self.conf = {}
-		self.metaconf = {}
+		self.coreconf = coreconf.coreconf
 		self.action = args['action']
+		self.rolesdir = Path(self.coreconf['roles_dir'])
+		self.start_path = Path(self.serverdir, 'start.sh')
 
 		if not self.serverconf.is_file():
 			print('ERROR: ' + confdir + ' does not exist')
@@ -47,7 +51,7 @@ class UpdateConf:
 		self.make_serverdir()
 		self.write_eula()
 		self.symlink_launcher()
-		self.setup_plugins()
+		#self.setup_plugins()
 		self.make_start_script()
 
 		print('Done! Now run the start script to generate the initial state')
