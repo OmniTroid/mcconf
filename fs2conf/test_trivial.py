@@ -6,7 +6,7 @@ import fs2conf as f2c
 
 def test_trivial():
 
-	root_path = Path('/Users/dskoland/projects/mc/mc.buk.gg-conf/base')
+	root_path = Path('')
 
 	result = f2c.fs2conf(dir_=root_path)
 
