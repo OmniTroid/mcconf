@@ -7,6 +7,7 @@ import argparse
 
 import mcconf
 
+
 def main():
 	parser = argparse.ArgumentParser('Minecraft server config tool')
 
@@ -39,6 +40,7 @@ def main():
 		uc.update_all()
 	else:
 		print('Unknown action: ' + args['action'])
+
 
 if __name__ == '__main__':
 	main()
