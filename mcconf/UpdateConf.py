@@ -10,7 +10,7 @@ import configparser
 import requests
 
 import dictcombiner.dictcombiner as dc
-import fs2conf as fc
+import fs2dict as f2d
 
 
 class UpdateConf:
@@ -45,7 +45,7 @@ class UpdateConf:
         roleconfs = []
 
         for dir_ in roledirs:
-            roleconfs.append(fc.fs2conf(dir_))
+            roleconfs.append(f2d.fs2dict(dir_))
 
         self.combined_conf = dc.combine_dicts(roleconfs)
 
