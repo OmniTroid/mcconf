@@ -45,7 +45,7 @@ def fs2conf(dir_: Path) -> dict:
 
         if child.is_file():
             if child.name.endswith('.json'):
-                subconf = fh.parse_json(child)
+                subconf = fp.parse_json(child)
 
         elif child.is_dir():
             # This means the dir contains a set of files to be combined to one
