@@ -60,18 +60,3 @@ def fs2conf(dir_: Path) -> dict:
 
     return conf
 
-
-# Combine the given list of paths to a dict
-def combine_dirs(dirs: [Path]) -> dict:
-    confs = []
-
-    for dir_ in dirs:
-        if not dir_.is_dir():
-            print('Warning: ' + str(dir_) + ' is not a directory.')
-            continue
-
-        confs.append(fs2conf(dir_))
-
-    result_conf = dc.combine_dicts(confs)
-
-    return result_conf

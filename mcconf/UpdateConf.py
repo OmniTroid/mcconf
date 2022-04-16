@@ -42,7 +42,12 @@ class UpdateConf:
             json.loads(open(self.serverconf).read())['roles']
         ]
 
-        self.combined_conf = fc.combine_dirs(roledirs)
+        roleconfs = []
+
+        for dir_ in roledirs:
+            roleconfs.append(fc.fs2conf(dir_))
+
+        self.combined_conf = dc.combine_dicts(roleconfs)
 
         self.metaconf = self.combined_conf['metaconf.json']
         self.conf = self.combined_conf['conf']
