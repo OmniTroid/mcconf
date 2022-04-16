@@ -24,7 +24,7 @@ def format_to_dict(path: Path) -> dict:
 
 
 # Traverse the given dir and build a fully combined dict
-def fs2conf(path: Path) -> dict:
+def fs2dict(path: Path) -> dict:
     if not path.exists():
         raise FileNotFoundError
     if not path.is_dir():
@@ -39,7 +39,7 @@ def fs2conf(path: Path) -> dict:
             continue
 
         if child.is_dir():
-            conf[child.name] = fs2conf(child)
+            conf[child.name] = fs2dict(child)
             continue
 
     return conf

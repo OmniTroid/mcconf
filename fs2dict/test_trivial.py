@@ -2,14 +2,13 @@ from pathlib import Path
 
 import pprint as pp
 
-import fs2conf as f2c
+import fs2dict as f2d
 
 
 def test_trivial():
-
     root_path = Path('')
 
-    result = f2c.fs2conf(dir_=root_path)
+    result = f2d.fs2dict(root_path)
 
     pp.pprint(result)
 
@@ -17,9 +16,9 @@ def test_trivial():
 
 
 def test_empty():
-    empty_folder = Path('/tmp/fs2conf_empty')
+    empty_folder = Path('/tmp/fs2dict_empty')
     empty_folder.mkdir(exist_ok=True)
 
-    result = f2c.fs2conf(dir_=empty_folder)
+    result = f2d.fs2dict(empty_folder)
 
     assert result == {}
