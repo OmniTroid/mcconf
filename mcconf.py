@@ -24,11 +24,9 @@ def main():
 		help='Directory of the target server',
 		required=True)
 	parser.add_argument(
-		'--action',
 		dest='action',
 		metavar='[action]',
-		help='Action to take. Valid actions: init, update',
-		required=True)
+		help='Action to take. Valid actions: init, update')
 
 	args = vars(parser.parse_args())
 
