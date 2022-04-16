@@ -226,7 +226,7 @@ class UpdateConf:
             return
 
         for dir_ in plugins_conf_dir.iterdir():
-            # TODO: This is where we will add exceptions for plugins that dont have config.yml
+                # TODO: This is where we will add exceptions for plugins that dont have config.yml
             # conf_dir = Path(dir_)
             # conf_name = 'config.yml'
             # baseconf_path = Path(self.serverdir, 'plugins', conf_dir.name, 'config.yml')
