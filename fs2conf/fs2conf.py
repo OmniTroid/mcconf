@@ -1,8 +1,8 @@
 from pathlib import Path
-import json
 
 from . import formathandlers as fh
 from .dictcombiner import utils as dc
+
 
 # Combine all files in the given directory
 def combine_confs(conf_dir : Path) -> dict:
@@ -35,11 +35,11 @@ def combine_confs(conf_dir : Path) -> dict:
 
 	return result_conf
 
+
 # Traverses the given dir and build a fully combined conf tree
-def fs2conf(dir_ : Path) -> dict:
+def fs2conf(dir_: Path) -> dict:
 	if not dir_.is_dir():
 		raise NotADirectoryError(dir_)
-		return {}
 
 	conf = {}
 
@@ -62,6 +62,7 @@ def fs2conf(dir_ : Path) -> dict:
 		conf[child.name] = subconf
 
 	return conf
+
 
 # Combine the given list of paths to a dict
 def combine_dirs(dirs : [Path]) -> dict:
