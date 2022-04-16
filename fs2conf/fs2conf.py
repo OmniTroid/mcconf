@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from . import formathandlers as fh
+from . import formatparsers as fp
 from .dictcombiner import utils as dc
 
 
@@ -11,16 +11,13 @@ def combine_confs(conf_dir: Path) -> dict:
         print('INFO: ' + str(conf_dir) + ' not found.')
         return {}
 
-    # Determine how to parse this mess
-    if conf_dir.name.endswith('.json'):
-        read_func = fh.parse_json
-    elif conf_dir.name.endswith('.yml'):
-        read_func = fh.parse_yml
-    elif conf_dir.name.endswith('.properties'):
-        read_func = fh.parse_properties
-    else:
+    extension = conf_dir.name.split('.')[-1]
+
+    if extension not in fp.formatparsers:
         print('Error: unknown format for file: ' + conf_dir.name)
-        read_func = None
+        raise Exception
+
+    read_func = fp.formatparsers[extension]
 
     subconf_files = sorted(
         [Path(filename) for filename in conf_dir.iterdir()],
