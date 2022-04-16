@@ -4,59 +4,42 @@ from . import formatparsers as fp
 from .dictcombiner import utils as dc
 
 
-# Combine all files in the given directory
-def combine_confs(conf_dir: Path) -> dict:
-    # This means the file has no config, which is perfectly valid
-    if not conf_dir.exists():
-        print('INFO: ' + str(conf_dir) + ' not found.')
-        return {}
+def get_extension(path: Path):
+    return path.name.split('.')[-1]
 
-    extension = conf_dir.name.split('.')[-1]
 
-    if extension not in fp.formatparsers:
-        print('Error: unknown format for file: ' + conf_dir.name)
-        raise Exception
-
+# Take a file or directory of a known format and creates a combined dict
+def format_to_dict(path: Path) -> dict:
+    extension = get_extension(path)
     read_func = fp.formatparsers[extension]
 
-    subconf_files = sorted(
-        [Path(filename) for filename in conf_dir.iterdir()],
+    if path.is_file():
+        return read_func(path)
+
+    files = sorted(
+        [Path(filename) for filename in path.iterdir()],
         key=lambda f: f.name)
 
-    subconfs = []
-
-    for subconf_file in subconf_files:
-        subconfs.append(read_func(subconf_file))
-
-    result_conf = dc.combine_dicts(subconfs)
-
-    return result_conf
+    return dc.combine_dicts(read_func(file) for file in files)
 
 
-# Traverses the given dir and build a fully combined conf tree
-def fs2conf(dir_: Path) -> dict:
-    if not dir_.is_dir():
-        raise NotADirectoryError(dir_)
+# Traverse the given dir and build a fully combined dict
+def fs2conf(path: Path) -> dict:
+    if not path.exists():
+        raise FileNotFoundError
+    if not path.is_dir():
+        raise NotADirectoryError
 
     conf = {}
 
-    for child in dir_.iterdir():
-        subconf = {}
+    for child in path.iterdir():
+        extension = get_extension(child)
+        if extension in fp.formatparsers:
+            conf[child.name] = format_to_dict(child)
+            continue
 
-        if child.is_file():
-            if child.name.endswith('.json'):
-                subconf = fp.parse_json(child)
-
-        elif child.is_dir():
-            # This means the dir contains a set of files to be combined to one
-            if '.' in child.name:
-                subconf = combine_confs(child)
-            else:
-                subconf = fs2conf(child)
-        else:
-            print('Error: not a file or directory! ' + child.name)
-
-        conf[child.name] = subconf
+        if child.is_dir():
+            conf[child.name] = fs2conf(child)
+            continue
 
     return conf
-
