@@ -2,3 +2,5 @@ coreconf.py
 .DS_Store
 *.pyc
 tests/*
+/venv/
+/.idea/

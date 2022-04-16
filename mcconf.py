@@ -7,8 +7,9 @@ import argparse
 
 import mcconf
 
+
 def main():
-	parser = argparse.ArgumentParser('Minecraft server config updater')
+	parser = argparse.ArgumentParser('Minecraft server config tool')
 
 	parser.add_argument(
 		'--serverconf',
@@ -17,22 +18,27 @@ def main():
 		help='Path to serverconf.json',
 		required=True)
 	parser.add_argument(
-		'--rolesdir',
-		dest='rolesdir',
-		metavar='[rolesdir]',
-		help='Directory which contains role config files.',
-		required=True)
-	parser.add_argument(
 		'--serverdir',
 		dest='serverdir',
 		metavar='[serverdir]',
 		help='Directory of the target server',
 		required=True)
+	parser.add_argument(
+		dest='action',
+		metavar='[action]',
+		help='Action to take. Valid actions: init, update')
 
 	args = vars(parser.parse_args())
 
 	uc = mcconf.UpdateConf(args)
-	#uc.update_all()
+
+	if args['action'] == 'init':
+		uc.init_server()
+	elif args['action'] == 'update':
+		uc.update_all()
+	else:
+		print('Unknown action: ' + args['action'])
+
 
 if __name__ == '__main__':
 	main()

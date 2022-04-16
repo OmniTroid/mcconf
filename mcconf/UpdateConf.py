@@ -1,161 +1,318 @@
-import io
-import yaml
-import json
-import configparser
-import pprint
+import os
+import time
+import subprocess
 from pathlib import Path
 from typing import Callable
 
+import yaml
+import json
+import configparser
+import requests
+
 import dictcombiner.dictcombiner as dc
-import fs2conf as fc
+import fs2dict as f2d
+
 
 class UpdateConf:
-	def __init__(self, args):
-		self.args = args
-		self.serverconf = Path(args['serverconf'])
-		self.rolesdir = Path(args['rolesdir'])
-		self.serverdir = Path(args['serverdir'])
-		self.conf = {}
-		self.metaconf = {}
+    def __init__(self, args):
+        import coreconf
+        self.args = args
+        self.serverconf = Path(args['serverconf'])
+        self.serverdir = Path(args['serverdir'])
+        self.conf = {}
+        self.coreconf = coreconf.coreconf
+        self.action = args['action']
+        self.rolesdir = Path(self.coreconf['roles_dir'])
+        self.start_path = Path(self.serverdir, 'start.sh')
 
-		if not self.serverconf.is_file():
-			print('ERROR: ' + confdir + ' does not exist')
-			raise FileNotFoundError
+        if not self.serverconf.is_file():
+            print('ERROR: ' + str(self.serverconf) + ' does not exist')
+            raise FileNotFoundError
 
-		if not self.rolesdir.is_dir():
-			print('ERROR: ' + rolesdir + ' does not exist')
-			raise NotADirectoryError
+        if not self.rolesdir.is_dir():
+            print('ERROR: ' + str(self.rolesdir) + ' does not exist')
+            raise NotADirectoryError
 
-		if not self.serverdir.exists():
-			print('ERROR: ' + serverdir + ' does not exist')
-			raise NotADirectoryError
+        if not self.serverdir.exists() and self.action != 'init':
+            print('ERROR: ' + str(self.serverdir) + ' does not exist')
+            raise NotADirectoryError
 
-		roledirs = [
-			Path(self.rolesdir, role) for role in 
-				json.loads(open(self.serverconf).read())['roles']
-		]
+        roledirs = [
+            Path(self.rolesdir, role) for role in
+            json.loads(open(self.serverconf).read())['roles']
+        ]
 
-		self.combined_conf = fc.combine_dirs(roledirs)
+        self.combined_conf = dc.combine_dicts(f2d.fs2dict(dir_) for dir_ in roledirs)
 
-		pprint.pprint(self.combined_conf)
+        self.metaconf = self.combined_conf['metaconf.json']
+        self.conf = self.combined_conf['conf']
 
-		self.metaconf = self.combined_conf['metaconf.json']
-		self.conf = self.combined_conf['conf']
+    def init_server(self):
+        self.make_serverdir()
+        self.write_eula()
+        self.symlink_launcher()
+        # TODO: implement
+        # self.setup_plugins()
+        self.make_start_script()
 
-	def update_all(self):
-		self.update_server_properties()
-		self.update_bukkit_yml()
-		self.update_spigot_yml()
-		self.update_paper_yml()
-		#self.update_plugin_confs()
+        print('Done! Now run the start script to generate the initial state')
 
-	def update_server_properties(self):
-		baseconf_path = Path(self.serverdir, 'server.properties')
-		subconf_dir = Path(self.confdir, 'server.properties')
-		self.update_conf(
-			baseconf_path, subconf_dir,
-			self.read_properties_file, self.write_properties_file)
+    # initserver functions #
 
-	def update_bukkit_yml(self):
-		self.update_core_yml('bukkit')
+    def make_serverdir(self):
+        print('### Make server directory')
+        if self.serverdir.exists():
+            print('INFO: ' + str(self.serverdir) + ' already exists, skipping mkdir step.')
+        else:
+            self.serverdir.mkdir()
 
-	def update_spigot_yml(self):
-		self.update_core_yml('spigot')
+    def write_eula(self):
+        print('### Write eula file')
 
-	def update_paper_yml(self):
-		self.update_core_yml('paper')
+        eula_path = Path(self.serverdir, 'eula.txt')
 
-	def update_plugin_confs(self):
-		plugins_conf_dir = Path(self.confdir, 'plugins')
+        with open(eula_path, 'w') as file:
+            file.write('eula=true\n')
 
-		if not plugins_conf_dir.exists():
-			print('INFO: ' + str(plugins_conf_dir) + ' not found, skipping')
-			return
+    def symlink_launcher(self):
+        print('### Symlink launcher')
 
-		for dir_ in plugins_conf_dir.iterdir():
-			conf_dir = Path(dir_)
-			# This is where we will add exceptions for plugins that dont have config.yml
-			conf_name = 'config.yml'
-			baseconf_path = Path(self.serverdir, 'plugins', conf_dir.name, 'config.yml')
+        if 'launcher_version' in self.metaconf:
+            version = self.metaconf['launcher_version']
+        else:
+            version = 'latest'
 
-	# Wrapper for updating core yml files (bukkit.yml, spigot.yml etc.)
-	def update_core_yml(self, name : str):
-		core_yml_path = Path(self.serverdir, name + '.yml')
-		sub_yml_dir = Path(self.confdir, name + '.yml')
+        launcher_src = Path(
+            self.coreconf['launcher_dir'],
+            self.metaconf['launcher'],
+            version + '.jar'
+        )
 
-		self.update_conf(
-			core_yml_path, sub_yml_dir,
-			self.read_yml, self.write_yml)
+        if not launcher_src.exists():
+            print('ERROR: ' + str(launcher_src) + ' does not exist')
+            raise FileNotFoundError
 
-	def update_conf(self,
-			baseconf_path : Path, subconf_dir : Path,
-			read_func : Callable, write_func : Callable):
+        launcher_dst = Path(self.serverdir, self.metaconf['name'] + '.jar')
 
-		if not baseconf_path.exists():
-			print('ERROR: ' + str(baseconf_path) + ' not found.')
-			return
+        if launcher_dst.exists():
+            print('INFO: ' + str(launcher_dst) + ' exists, skipping symlink step.')
+        else:
+            os.symlink(launcher_src, launcher_dst)
 
-		# This means the file has no config, which is perfectly valid
-		if not subconf_dir.exists():
-			print('INFO: ' + str(subconf_dir) + ' not found, skipping.')
-			return
+    def setup_plugins(self):
+        print('### Setup plugins')
+        server_plugin_dir = Path(self.serverdir, 'plugins')
 
-		original_path = Path(baseconf_path.parent, 'original_' + baseconf_path.name)
+        if not server_plugin_dir.exists():
+            server_plugin_dir.mkdir()
 
-		# Use the original file if we have it
-		# This means the script has been run before
-		# This ensures idempotency
-		if original_path.exists():
-			baseconf = read_func(original_path)
-		else:
-			baseconf = read_func(baseconf_path)
+        for plugin, plugin_conf in self.metaconf['plugins'].items():
+            if 'version' in plugin_conf:
+                version = plugin_conf['version']
+            else:
+                version = 'latest'
 
-		subconf_files = sorted(
-			[Path(filename) for filename in subconf_dir.iterdir()],
-			key=lambda f: f.name)
+            plugin_src = Path(self.coreconf['plugin_dir'], plugin, version + '.jar')
+            plugin_dst = Path(server_plugin_dir, plugin + '.jar')
 
-		confs = [baseconf]
+            if not plugin_src.exists():
+                print('WARNING: ' + str(plugin_src) + ' does not exist')
 
-		for subconf_file in subconf_files:
-			confs.append(read_func(subconf_file))
+            if plugin_dst.exists():
+                print('INFO: plugin symlink ' + str(plugin_dst) + ' exists, skipping.')
+            else:
+                os.symlink(plugin_src, plugin_dst)
 
-		result_conf = dc.combine_dicts(confs)
+    # Download and modify start script
+    def make_start_script(self):
+        print('### Make start script')
 
-		if not original_path.exists():
-			baseconf_path.rename(original_path)
+        if self.start_path.exists():
+            print('# INFO: ' + str(self.start_path) + ' already exists. Skipping step.')
 
-		write_func(baseconf_path, result_conf)
+        response = requests.get(
+            # 'http://tiny.cc/mcstart',
+            """https://gist.githubusercontent.com/OmniTroid/267730675631383ce3651155405b3474\
+            /raw/95bc84a677df065ebe032eeda5db5c2b72438d59/start.sh""",
+            headers={'User-Agent': 'mcconf'})
 
-### Read and write helpers
-	def read_properties_file(self, path : Path) -> dict:
-		## HACK: so server.properties actually lacks the section header.
-		## configparse doesn't like this so we have to hack around that.
-		conf_str = '[default]\n'
+        if response.status_code != 200:
+            raise ConnectionError
 
-		with open(path) as file:
-			data = file.read()
-			conf_str = conf_str + data
+        start_script = response.text
 
-			tmp_conf = configparser.ConfigParser()
-			tmp_conf.read_string(conf_str)
+        if 'java_version' in self.metaconf:
+            java_version = self.metaconf['java_version']
+        else:
+            java_version = 'latest'
 
-			conf = dict(tmp_conf.items('default'))
+        java_path = Path(self.coreconf['java_dir'], java_version)
 
-			return conf
+        if not java_path.exists():
+            print('WARNING: ' + str(java_path) + ' does not exist')
 
-	def write_properties_file(self, path : Path, data : dict):
-		with open(path, 'w') as file:
-			tmp_dict = {'default': data}
-			tmp_conf = configparser.ConfigParser()
-			tmp_conf.read_dict(tmp_dict)
-			tmp_conf.write(file)
+        memory = str(self.metaconf['memory'])
+        start_script = start_script.replace(
+            'java', str(java_path)
+        ).replace(
+            'paperclip.jar',
+            self.metaconf['name'] + '.jar'
+        ).replace(
+            'Xms10G',
+            f'Xms{memory}G'
+        ).replace(
+            'Xmx10G',
+            f'Xmx{memory}G')
 
-	def read_yml(self, path : Path) -> dict:
-		with open(path) as file:
-			data = yaml.safe_load(file)
+        self.start_path.write_text(start_script)
 
-		return data
+        # Make executable
+        st = self.start_path.stat()
+        self.start_path.chmod(st.st_mode | 0o111)
 
-	def write_yml(self, path : Path, data : dict):
-		with open(path, 'w') as file:
-			file.write(yaml.dump(data))
+    # Start server and generate initial state
+    def generate_initial_state(self):
+        print('### Generate initial state')
+        print(self.start_path)
+        print('Starting server process')
+        child_process = subprocess.Popen(
+            self.start_path,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL)
+
+        # Give it some time to set up
+        print('Waiting 20 seconds...')
+        time.sleep(20)
+
+        # FIXME: child never responds to kill signal for some reason
+
+        print('Killing server process')
+        child_process.kill()
+
+        print('Initial generation complete.')
+
+    # Update functions
+
+    def update_all(self):
+        self.update_server_properties()
+        self.update_bukkit_yml()
+        self.update_spigot_yml()
+        self.update_paper_yml()
+
+    # self.update_plugin_confs()
+
+    def update_server_properties(self):
+        baseconf_path = Path(self.serverdir, 'server.properties')
+        if 'server.properties' not in self.conf:
+            return
+        delta_conf = self.conf['server.properties']
+        self.update_conf(
+            baseconf_path, delta_conf,
+            self.read_properties_file, self.write_properties_file)
+
+    def update_bukkit_yml(self):
+        self.update_core_yml('bukkit')
+
+    def update_spigot_yml(self):
+        self.update_core_yml('spigot')
+
+    def update_paper_yml(self):
+        self.update_core_yml('paper')
+
+    def update_plugin_confs(self):
+        plugins_conf_dir = Path(self.confdir, 'plugins')
+
+        if not plugins_conf_dir.exists():
+            print('INFO: ' + str(plugins_conf_dir) + ' not found, skipping')
+            return
+
+        for dir_ in plugins_conf_dir.iterdir():
+            pass
+            # TODO: Add exceptions for plugins that dont have config.yml
+
+            # conf_dir = Path(dir_)
+            # conf_name = 'config.yml'
+            # baseconf_path = Path(self.serverdir, 'plugins', conf_dir.name, 'config.yml')
+
+    # Wrapper for updating core yml files (bukkit.yml, spigot.yml etc.)
+    def update_core_yml(self, name: str):
+        full_name = name + '.yml'
+        core_yml_path = Path(self.serverdir, full_name)
+
+        if full_name not in self.conf:
+            return
+
+        delta_conf = self.conf[full_name]
+
+        self.update_conf(
+            core_yml_path, delta_conf,
+            self.read_yml, self.write_yml)
+
+    # Updates the file given by conf_path based on the content of delta_conf
+    # conf_path = the path to the config to update
+    # delta_conf = the conf to "add" to the conf_path
+    # read_func = a function that permits reading from the conf_path format
+    # write_func = a function that permits writing to the conf_path format
+    @staticmethod
+    def update_conf(conf_path: Path, delta_conf: dict,
+                    read_func: Callable, write_func: Callable):
+
+        if not conf_path.exists():
+            print('ERROR: ' + str(conf_path) + ' not found.')
+            return
+
+        original_path = Path(conf_path.parent, 'original_' + conf_path.name)
+
+        # Use the original file if we have it
+        # This means the script has been run before
+        # This ensures idempotency
+        if original_path.exists():
+            baseconf = read_func(original_path)
+        else:
+            baseconf = read_func(conf_path)
+
+        result_conf = dc.combine_dicts([baseconf, delta_conf])
+
+        if not original_path.exists():
+            conf_path.rename(original_path)
+
+        write_func(conf_path, result_conf)
+
+    # Read and write helpers
+    @staticmethod
+    def read_properties_file(path: Path) -> dict:
+        # HACK: so server.properties actually lacks the section header.
+        # configparse doesn't like this so we have to hack around that.
+        conf_str = '[default]\n'
+
+        with open(path) as file:
+            data = file.read()
+            conf_str = conf_str + data
+
+            tmp_conf = configparser.ConfigParser()
+            tmp_conf.read_string(conf_str)
+
+            conf = dict(tmp_conf.items('default'))
+
+            return conf
+
+    @staticmethod
+    def write_properties_file(path: Path, data: dict):
+        with open(path, 'w') as file:
+            tmp_dict = {'default': data}
+            tmp_conf = configparser.ConfigParser()
+            tmp_conf.read_dict(tmp_dict)
+            tmp_conf.write(file)
+
+    @staticmethod
+    def read_yml(path: Path) -> dict:
+        with open(path) as file:
+            data = yaml.safe_load(file)
+
+        return data
+
+    @staticmethod
+    def write_yml(path: Path, data: dict):
+        with open(path, 'w') as file:
+            file.write(yaml.dump(data))

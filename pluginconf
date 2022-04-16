@@ -1,8 +1,0 @@
-#!/usr/bin/env python3
-
-import mcconf
-import config
-
-if __name__ == '__main__':
-	pc = mcconf.PluginConf(config.config)
-	pc.start()
