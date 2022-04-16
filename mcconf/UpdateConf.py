@@ -42,12 +42,7 @@ class UpdateConf:
             json.loads(open(self.serverconf).read())['roles']
         ]
 
-        roleconfs = []
-
-        for dir_ in roledirs:
-            roleconfs.append(f2d.fs2dict(dir_))
-
-        self.combined_conf = dc.combine_dicts(roleconfs)
+        self.combined_conf = dc.combine_dicts(f2d.fs2dict(dir_) for dir_ in roledirs)
 
         self.metaconf = self.combined_conf['metaconf.json']
         self.conf = self.combined_conf['conf']
@@ -209,9 +204,11 @@ class UpdateConf:
 
     def update_server_properties(self):
         baseconf_path = Path(self.serverdir, 'server.properties')
-        subconf_dir = Path(self.confdir, 'server.properties')
+        if 'server.properties' not in self.conf:
+            return
+        delta_conf = self.conf['server.properties']
         self.update_conf(
-            baseconf_path, subconf_dir,
+            baseconf_path, delta_conf,
             self.read_properties_file, self.write_properties_file)
 
     def update_bukkit_yml(self):
@@ -231,35 +228,41 @@ class UpdateConf:
             return
 
         for dir_ in plugins_conf_dir.iterdir():
-                # TODO: This is where we will add exceptions for plugins that dont have config.yml
+            pass
+            # TODO: Add exceptions for plugins that dont have config.yml
+
             # conf_dir = Path(dir_)
             # conf_name = 'config.yml'
             # baseconf_path = Path(self.serverdir, 'plugins', conf_dir.name, 'config.yml')
 
     # Wrapper for updating core yml files (bukkit.yml, spigot.yml etc.)
     def update_core_yml(self, name: str):
-        core_yml_path = Path(self.serverdir, name + '.yml')
-        sub_yml_dir = Path(self.confdir, name + '.yml')
+        full_name = name + '.yml'
+        core_yml_path = Path(self.serverdir, full_name)
+
+        if full_name not in self.conf:
+            return
+
+        delta_conf = self.conf[full_name]
 
         self.update_conf(
-            core_yml_path, sub_yml_dir,
+            core_yml_path, delta_conf,
             self.read_yml, self.write_yml)
 
-    # Updates the conf files of an existing server
+    # Updates the file given by conf_path based on the content of delta_conf
+    # conf_path = the path to the config to update
+    # delta_conf = the conf to "add" to the conf_path
+    # read_func = a function that permits reading from the conf_path format
+    # write_func = a function that permits writing to the conf_path format
     @staticmethod
-    def update_conf(baseconf_path: Path, subconf_dir: Path,
+    def update_conf(conf_path: Path, delta_conf: dict,
                     read_func: Callable, write_func: Callable):
 
-        if not baseconf_path.exists():
-            print('ERROR: ' + str(baseconf_path) + ' not found.')
+        if not conf_path.exists():
+            print('ERROR: ' + str(conf_path) + ' not found.')
             return
 
-        # This means the file has no config, which is perfectly valid
-        if not subconf_dir.exists():
-            print('INFO: ' + str(subconf_dir) + ' not found, skipping.')
-            return
-
-        original_path = Path(baseconf_path.parent, 'original_' + baseconf_path.name)
+        original_path = Path(conf_path.parent, 'original_' + conf_path.name)
 
         # Use the original file if we have it
         # This means the script has been run before
@@ -267,23 +270,14 @@ class UpdateConf:
         if original_path.exists():
             baseconf = read_func(original_path)
         else:
-            baseconf = read_func(baseconf_path)
+            baseconf = read_func(conf_path)
 
-        subconf_files = sorted(
-            [Path(filename) for filename in subconf_dir.iterdir()],
-            key=lambda f: f.name)
-
-        confs = [baseconf]
-
-        for subconf_file in subconf_files:
-            confs.append(read_func(subconf_file))
-
-        result_conf = dc.combine_dicts(confs)
+        result_conf = dc.combine_dicts([baseconf, delta_conf])
 
         if not original_path.exists():
-            baseconf_path.rename(original_path)
+            conf_path.rename(original_path)
 
-        write_func(baseconf_path, result_conf)
+        write_func(conf_path, result_conf)
 
     # Read and write helpers
     @staticmethod
