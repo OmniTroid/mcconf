@@ -78,15 +78,22 @@ class UpdateConf:
     def symlink_launcher(self):
         print('### Symlink launcher')
 
+        launcher_dir = Path(
+            self.coreconf['launcher_dir'],
+            self.metaconf['launcher']
+        )
+
         if 'launcher_version' in self.metaconf:
-            version = self.metaconf['launcher_version']
+            launcher_file = self.metaconf['launcher_version'] + '.jar'
+        # If there is no specific version, use the newest(latest) launcher
         else:
-            version = 'latest'
+            launcher_file = sorted(
+                (file for file in launcher_dir.iterdir()),
+                key=lambda x: x.stat().st_mtime)[-1]
 
         launcher_src = Path(
-            self.coreconf['launcher_dir'],
-            self.metaconf['launcher'],
-            version + '.jar'
+            launcher_dir,
+            launcher_file
         )
 
         if not launcher_src.exists():
