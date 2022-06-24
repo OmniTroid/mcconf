@@ -265,8 +265,9 @@ class UpdateConf:
     def update_conf(self, conf_path: Path, delta_conf: dict,
                     read_func: Callable, write_func: Callable):
 
+        print('Applying conf to ' + str(conf_path))
+
         if self.dry_run:
-            print(conf_path)
             print(json.dumps(delta_conf, indent=4))
             return
 
