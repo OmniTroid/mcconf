@@ -24,6 +24,11 @@ def main():
 		help='Directory of the target server',
 		required=True)
 	parser.add_argument(
+		'--dry-run',
+		dest='dry_run',
+		help='Just print commands, do not actually run anything',
+		action='store_true')
+	parser.add_argument(
 		dest='action',
 		metavar='[action]',
 		help='Action to take. Valid actions: init, update')

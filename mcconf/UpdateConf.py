@@ -24,6 +24,7 @@ class UpdateConf:
         self.action = args['action']
         self.rolesdir = Path(self.coreconf['roles_dir'])
         self.start_path = Path(self.serverdir, 'start.sh')
+        self.dry_run = args['dry_run']
 
         if not self.serverconf.is_file():
             print('ERROR: ' + str(self.serverconf) + ' does not exist')
@@ -254,9 +255,13 @@ class UpdateConf:
     # delta_conf = the conf to "add" to the conf_path
     # read_func = a function that permits reading from the conf_path format
     # write_func = a function that permits writing to the conf_path format
-    @staticmethod
-    def update_conf(conf_path: Path, delta_conf: dict,
+    def update_conf(self, conf_path: Path, delta_conf: dict,
                     read_func: Callable, write_func: Callable):
+
+        if self.dry_run:
+            print(conf_path)
+            print(json.dumps(delta_conf, indent=4))
+            return
 
         if not conf_path.exists():
             print('ERROR: ' + str(conf_path) + ' not found.')
