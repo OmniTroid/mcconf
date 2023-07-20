@@ -3,6 +3,7 @@ import time
 import subprocess
 from pathlib import Path
 from typing import Callable
+import copy
 
 import yaml
 import json
@@ -17,18 +18,15 @@ class UpdateConf:
     def __init__(self, args):
         import coreconf
         self.args = args
-        self.serverconf = Path(args['serverconf'])
-        self.serverdir = Path(args['serverdir'])
-        self.conf = {}
+        self.role = args['role']
+        self.servername = args['name']
+        self.serverdir = Path(args['serversdir'], self.servername)
+        self.roledir = Path(coreconf.coreconf['roles_dir'], self.role)
         self.coreconf = coreconf.coreconf
         self.action = args['action']
         self.rolesdir = Path(self.coreconf['roles_dir'])
         self.start_path = Path(self.serverdir, 'start.sh')
         self.dry_run = args['dry_run']
-
-        if not self.serverconf.is_file():
-            print('ERROR: ' + str(self.serverconf) + ' does not exist')
-            raise FileNotFoundError
 
         if not self.rolesdir.is_dir():
             print('ERROR: ' + str(self.rolesdir) + ' does not exist')
@@ -38,14 +36,10 @@ class UpdateConf:
             print('ERROR: ' + str(self.serverdir) + ' does not exist')
             raise NotADirectoryError
 
-        roledirs = [
-            Path(self.rolesdir, role) for role in
-            json.loads(open(self.serverconf).read())['roles']
-        ]
+        base_conf = f2d.fs2dict(self.roledir)
+        self.combined_conf = self.build_conf(base_conf)
 
-        self.combined_conf = dc.combine_dicts(f2d.fs2dict(dir_) for dir_ in roledirs)
-
-        self.metaconf = self.combined_conf['metaconf.json']
+        self.roleconf = self.combined_conf['roleconf.json']
         self.conf = self.combined_conf['conf']
 
     def init_server(self):
@@ -80,11 +74,11 @@ class UpdateConf:
 
         launcher_dir = Path(
             self.coreconf['launcher_dir'],
-            self.metaconf['launcher']
+            self.roleconf['launcher']
         )
 
-        if 'launcher_version' in self.metaconf:
-            launcher_file = self.metaconf['launcher_version'] + '.jar'
+        if 'launcher_version' in self.roleconf:
+            launcher_file = self.roleconf['launcher_version'] + '.jar'
         # If there is no specific version, use the newest(latest) launcher
         else:
             launcher_file = sorted(
@@ -100,7 +94,7 @@ class UpdateConf:
             print('ERROR: ' + str(launcher_src) + ' does not exist')
             raise FileNotFoundError
 
-        launcher_dst = Path(self.serverdir, self.metaconf['name'] + '.jar')
+        launcher_dst = Path(self.serverdir, self.role + '.jar')
 
         if launcher_dst.exists():
             print('INFO: ' + str(launcher_dst) + ' exists, skipping symlink step.')
@@ -114,7 +108,7 @@ class UpdateConf:
         if not server_plugin_dir.exists():
             server_plugin_dir.mkdir()
 
-        for plugin, plugin_conf in self.metaconf['plugins'].items():
+        for plugin, plugin_conf in self.roleconf['plugins'].items():
             if 'version' in plugin_conf:
                 version = plugin_conf['version']
             else:
@@ -149,8 +143,8 @@ class UpdateConf:
 
         start_script = response.text
 
-        if 'java_version' in self.metaconf:
-            java_version = self.metaconf['java_version']
+        if 'java_version' in self.roleconf:
+            java_version = self.roleconf['java_version']
         else:
             java_version = 'latest'
 
@@ -159,12 +153,12 @@ class UpdateConf:
         if not java_path.exists():
             print('WARNING: ' + str(java_path) + ' does not exist')
 
-        memory = str(self.metaconf['memory'])
+        memory = str(self.roleconf['memory'])
         start_script = start_script.replace(
             'java', str(java_path)
         ).replace(
             'paperclip.jar',
-            self.metaconf['name'] + '.jar'
+            self.servername + '.jar'
         ).replace(
             'Xms10G',
             f'Xms{memory}G'
@@ -291,6 +285,27 @@ class UpdateConf:
             conf_path.rename(original_path)
 
         write_func(conf_path, result_conf)
+
+    # Constructs a complete conf dictionary based on a given complete conf from a role dir
+    # Uses the roles section in the roleconf.json file to recursively build each subrole
+    # This function "resolves" the roles and hence the returned config won't return them
+    # Will run indefinitely if there are circular dependencies
+    def build_conf(self, base_conf: dict) -> dict:
+        roles = base_conf['roleconf.json']['roles'] if 'roles' in base_conf['roleconf.json'] else []
+        stripped_conf = copy.deepcopy(base_conf)
+        del stripped_conf['roleconf.json']['roles']
+
+        subconfs = []
+        for role in roles:
+            confpath = Path(self.rolesdir, role)
+            if not confpath.exists():
+                print('ERROR: ' + str(confpath) + ' does not exist')
+                raise FileNotFoundError
+            subconf = f2d.fs2dict(confpath)
+            subconfs.append(self.build_conf(subconf))
+
+        final_conf = dc.combine_dicts([*subconfs, stripped_conf])
+        return final_conf
 
     # Read and write helpers
     @staticmethod
