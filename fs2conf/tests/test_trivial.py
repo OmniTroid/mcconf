@@ -20,3 +20,31 @@ def test_empty():
     result = f2c.fs2conf(empty_folder)
 
     assert result == {}
+
+
+def test_merge_lists():
+    dict_a = {
+        "a": [1, 1, 2, 3],
+        "b": [4, 5, 6]
+    }
+
+    dict_b = {
+        "a": [7, 8, 9],
+        "b": [10, 11, 12]
+    }
+
+    expected = {
+        "a": [1, 2, 3, 7, 8, 9],
+        "b": [4, 5, 6, 10, 11, 12]
+    }
+
+    result = f2c.dc.combine_dicts([dict_a, dict_b])
+
+    list_a = [1, 1, 2, 3]
+    list_b = [4, 5, 6]
+    result = f2c.dc.merge_lists(list_a, list_b)
+    expected = [1, 2, 3, 4, 5, 6]
+
+    assert result == expected
+
+    #assert result == expected

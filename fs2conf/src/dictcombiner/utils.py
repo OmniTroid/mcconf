@@ -2,7 +2,7 @@ import copy
 
 
 # Modifies the given result dicts value given by tree_path to value
-def modify_result_dict(result_dict : dict, tree_path : [str], value):
+def modify_result_dict(result_dict: dict, tree_path: [str], value):
 	key = tree_path[0]
 
 	if len(tree_path) == 1:
@@ -19,6 +19,9 @@ def traverse(result_dict: dict, sub_dict: dict, tree_path: [str]):
 	for key, value in sub_dict.items():
 		new_tree_path = copy.deepcopy(tree_path)
 		new_tree_path.append(key)
+		# TODO: Somehow implement list merge here
+		# if type(value) is list:
+		#	 modify_result_dict(result_dict, new_tree_path, value)
 		if type(value) is not dict:
 			modify_result_dict(result_dict, new_tree_path, value)
 		else:
@@ -33,3 +36,7 @@ def combine_dicts(dicts: [dict]):
 		traverse(result_dict, dict_, [])
 
 	return result_dict
+
+
+def merge_lists(list_a: list, list_b: list):
+	return list(set(list_a + list_b))
