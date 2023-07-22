@@ -23,6 +23,15 @@ def test_empty():
 
 
 def test_merge_lists():
+    list_a = [1, 1, 2, 3]
+    list_b = [4, 5, 6]
+    result = f2c.dc.merge_lists(list_a, list_b)
+    expected = [1, 2, 3, 4, 5, 6]
+
+    assert result == expected
+
+
+def test_merge_lists_in_dict():
     dict_a = {
         "a": [1, 1, 2, 3],
         "b": [4, 5, 6]
@@ -38,13 +47,27 @@ def test_merge_lists():
         "b": [4, 5, 6, 10, 11, 12]
     }
 
-    result = f2c.dc.combine_dicts([dict_a, dict_b])
-
-    list_a = [1, 1, 2, 3]
-    list_b = [4, 5, 6]
-    result = f2c.dc.merge_lists(list_a, list_b)
-    expected = [1, 2, 3, 4, 5, 6]
-
+    result = f2c.dc.merge_dicts(dict_a, dict_b)
     assert result == expected
 
-    #assert result == expected
+
+def test_merge_dicts():
+    dict_a = {
+        "a": 1,
+        "b": 2
+    }
+
+    dict_b = {
+        "c": 3,
+        "d": 4
+    }
+
+    expected = {
+        "a": 1,
+        "b": 2,
+        "c": 3,
+        "d": 4
+    }
+
+    result = f2c.dc.merge_dicts(dict_a, dict_b)
+    assert result == expected

@@ -38,5 +38,28 @@ def combine_dicts(dicts: [dict]):
 	return result_dict
 
 
+# Merge two dicts
+def merge_dicts(dict_a: dict, dict_b: dict):
+	result_dict = {}
+
+	for key, value in dict_a.items():
+		# If it's not in dict_b, just add it, no need for merge logic
+		if key not in dict_b:
+			result_dict[key] = value
+			continue
+
+	for key, value in dict_b.items():
+		# If it's not in dict_a, just add it, no need for merge logic
+		if key not in dict_a:
+			result_dict[key] = value
+			continue
+
+	# At this point, the disjoint set of keys should be in result dict
+	# So now, we need to deal with the intersection of keys, which all need to be either merged or overwritten
+	# TODO: Implement merge logic
+
+	return result_dict
+
+
 def merge_lists(list_a: list, list_b: list):
 	return list(set(list_a + list_b))
