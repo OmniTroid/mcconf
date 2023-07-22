@@ -2,6 +2,7 @@ coreconf = {
 	'java_dir': '/data/java',
 	'plugin_dir': '/data/mc/plugins',
 	'launcher_dir': '/data/mc/launchers',
+	'roles_dir': '/data/mc/mc.buk.gg-conf/roles',
 
 	'resources': {
 		'EssentialsX': {'id': '9089', 'filetype': 'zip', 'provider': 'spiget'},
@@ -9,7 +10,7 @@ coreconf = {
 		'LuckPerms': {'id': '28140', 'filetype': 'jar', 'provider': 'spiget'},
 		'Vault': {'id': '34315', 'filetype': 'jar', 'provider': 'spiget'},
 		'WorldEdit': {'id': 'worldedit', 'filetype': 'jar', 'provider': 'bukkit'},
-		'WorldBorder': {'id': '60905', 'filetype':'jar', 'provider': 'spiget'},
+		'WorldBorder': {'id': '60905', 'filetype': 'jar', 'provider': 'spiget'},
 		'WorldGuard': {'id': 'worldguard', 'filetype': 'jar', 'provider': 'bukkit'}
 	},
 

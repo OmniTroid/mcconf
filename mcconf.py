@@ -12,22 +12,16 @@ def main():
 	parser = argparse.ArgumentParser('Minecraft server config tool')
 
 	parser.add_argument(
-		'--role',
-		dest='role',
-		metavar='[role]',
-		help='Name of the role to use. Based on this and roles_dir in coreconf.py, the appropriate\
-roleconf.json will be loaded',
+		'--serverconf',
+		dest='serverconf',
+		metavar='[serverconf]',
+		help='Path to the serverconf of the server to create. \
+Should be a json file which at least includes a list of roles to use.',
 		required=True)
 	parser.add_argument(
-		'--name',
-		dest='name',
-		metavar='[name]',
-		help='Name of the server to create',
-		required=True)
-	parser.add_argument(
-		'--serversdir',
-		dest='serversdir',
-		metavar='[serversdir]',
+		'--outdir',
+		dest='outdir',
+		metavar='[outdir]',
 		help='Directory to create the server in. Defaults to current working directory.',
 		default='.')
 	parser.add_argument(

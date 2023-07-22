@@ -4,6 +4,7 @@ import subprocess
 from pathlib import Path
 from typing import Callable
 import copy
+import logging
 
 import yaml
 import json
@@ -15,39 +16,55 @@ import fs2dict as f2d
 
 
 class UpdateConf:
-    def __init__(self, args):
+    def __init__(self, args: {}):
         import coreconf
-        self.args = args
-        self.role = args['role']
-        self.servername = args['name']
-        self.serverdir = Path(args['serversdir'], self.servername)
-        self.roledir = Path(coreconf.coreconf['roles_dir'], self.role)
         self.coreconf = coreconf.coreconf
+        self.java_dir = Path(self.coreconf['java_dir'])
+        self.plugin_dir = Path(self.coreconf['plugin_dir'])
+        self.launcher_dir = Path(self.coreconf['launcher_dir'])
+        self.roles_dir = Path(self.coreconf['roles_dir'])
+
+        self.args = args
+        self.serverconf_path = Path(args['serverconf'])
+        self.outdir = Path(args['outdir'])
         self.action = args['action']
-        self.rolesdir = Path(self.coreconf['roles_dir'])
-        self.start_path = Path(self.serverdir, 'start.sh')
         self.dry_run = args['dry_run']
 
-        if not self.rolesdir.is_dir():
-            print('ERROR: ' + str(self.rolesdir) + ' does not exist')
+        # Deduce servername from serverconf path, e.g. serverconf.json -> serverconf
+        # Possibly add option to override from args in the future
+        self.servername = self.serverconf_path.stem
+
+        self.serverdir = self.outdir / self.servername
+        self.start_path = self.serverdir / 'start.sh'
+
+        if not self.roles_dir.is_dir():
+            logging.error(str(self.roles_dir) + ' is not a directory')
             raise NotADirectoryError
 
         if not self.serverdir.exists() and self.action != 'init':
-            print('ERROR: ' + str(self.serverdir) + ' does not exist')
+            logging.error(str(self.serverdir) + ' is not a directory and action is not init')
             raise NotADirectoryError
 
-        base_conf = f2d.fs2dict(self.roledir)
-        self.combined_conf = self.build_conf(base_conf)
+        self.roles = json.loads(self.serverconf_path.read_text())['roles']
+        self.role_dirs = []
 
-        self.roleconf = self.combined_conf['roleconf.json']
-        self.conf = self.combined_conf['conf']
+        for role in self.roles:
+            role_dir = self.roles_dir / role
+            if not role_dir.is_dir():
+                logging.error(str(role) + ' is not a directory')
+                raise NotADirectoryError
+
+            self.role_dirs.append(role_dir)
+
+        self.combined_conf = self.build_conf(self.roles)
+        # TODO: Implement fs2conf
+        # self.complete_conf = fs2conf(roles)
 
     def init_server(self):
         self.make_serverdir()
         self.write_eula()
         self.symlink_launcher()
-        # TODO: implement
-        # self.setup_plugins()
+        self.init_plugins()
         self.make_start_script()
 
         print('Done! Now run the start script to generate the initial state')
@@ -101,14 +118,16 @@ class UpdateConf:
         else:
             os.symlink(launcher_src, launcher_dst)
 
-    def setup_plugins(self):
-        print('### Setup plugins')
+    def init_plugins(self):
+        print('### Init plugins')
         server_plugin_dir = Path(self.serverdir, 'plugins')
 
         if not server_plugin_dir.exists():
             server_plugin_dir.mkdir()
 
-        for plugin, plugin_conf in self.roleconf['plugins'].items():
+        plugins = self.roleconf['plugins'] if 'plugins' in self.roleconf else {}
+
+        for plugin, plugin_conf in plugins:
             if 'version' in plugin_conf:
                 version = plugin_conf['version']
             else:
@@ -297,7 +316,7 @@ class UpdateConf:
 
         subconfs = []
         for role in roles:
-            confpath = Path(self.rolesdir, role)
+            confpath = Path(self.roles_dir, role)
             if not confpath.exists():
                 print('ERROR: ' + str(confpath) + ' does not exist')
                 raise FileNotFoundError
