@@ -1,1 +1,1 @@
-from .fs2dict import fs2dict
+from .dir2dict import dir2dict
