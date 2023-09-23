@@ -36,7 +36,7 @@ def parse_properties(path: Path) -> dict:
 
 
 formatparsers = {
-	"json": parse_json,
-	"yml": parse_yml,
-	"properties": parse_properties
+    "json": parse_json,
+    "yml": parse_yml,
+    "properties": parse_properties
 }
