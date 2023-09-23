@@ -19,10 +19,10 @@ def main():
 Should be a json file which at least includes a list of roles to use.',
 		required=True)
 	parser.add_argument(
-		'--outdir',
-		dest='outdir',
-		metavar='[outdir]',
-		help='Directory to create the server in. Defaults to current working directory.',
+		'--serverdir',
+		dest='serverdir',
+		metavar='[serverdir]',
+		help='Path of the server directory. In case of init, it should not already exist.',
 		default='.')
 	parser.add_argument(
 		'--dry-run',

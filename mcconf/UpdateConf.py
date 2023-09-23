@@ -25,15 +25,10 @@ class UpdateConf:
 
         self.args = args
         self.serverconf_path = Path(args['serverconf'])
-        self.outdir = Path(args['outdir'])
+        self.serverdir = Path(args['serverdir'])
         self.action = args['action']
         self.dry_run = args['dry_run']
 
-        # Deduce servername from serverconf path, e.g. serverconf.json -> serverconf
-        # Possibly add option to override from args in the future
-        self.servername = self.serverconf_path.stem
-
-        self.serverdir = self.outdir / self.servername
         self.start_path = self.serverdir / 'start.sh'
 
         if not self.roles_dir.is_dir():
@@ -58,9 +53,11 @@ class UpdateConf:
         roleconfs = self.get_roleconfs(self.roles)
         self.complete_conf = dc.merge_dicts(roleconfs)
         self.roleconf = self.complete_conf['roleconf.json']
-        print('Init done.')
 
     def init_server(self):
+        if self.serverdir.exists():
+            raise FileExistsError(self.serverdir)
+
         self.make_serverdir()
         self.write_eula()
         self.symlink_launcher()
@@ -111,7 +108,7 @@ class UpdateConf:
             print('ERROR: ' + str(launcher_src) + ' does not exist')
             raise FileNotFoundError
 
-        launcher_dst = Path(self.serverdir, self.servername + '.jar')
+        launcher_dst = Path(self.serverdir, 'server.jar')
 
         if launcher_dst.exists():
             print('INFO: ' + str(launcher_dst) + ' exists, skipping symlink step.')
@@ -177,7 +174,7 @@ class UpdateConf:
             'java', str(java_path)
         ).replace(
             'paperclip.jar',
-            self.servername + '.jar'
+            'server.jar'
         ).replace(
             'Xms10G',
             f'Xms{memory}G'
