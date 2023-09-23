@@ -3,7 +3,6 @@ import time
 import subprocess
 from pathlib import Path
 from typing import Callable
-import copy
 import logging
 
 import yaml
@@ -56,9 +55,10 @@ class UpdateConf:
 
             self.role_dirs.append(role_dir)
 
-        self.combined_conf = self.build_conf(self.roles)
-        # TODO: Implement fs2conf
-        # self.complete_conf = fs2conf(roles)
+        roleconfs = self.get_roleconfs(self.roles)
+        self.complete_conf = dc.merge_dicts(roleconfs)
+        self.roleconf = self.complete_conf['roleconf.json']
+        print('Init done.')
 
     def init_server(self):
         self.make_serverdir()
@@ -111,7 +111,7 @@ class UpdateConf:
             print('ERROR: ' + str(launcher_src) + ' does not exist')
             raise FileNotFoundError
 
-        launcher_dst = Path(self.serverdir, self.role + '.jar')
+        launcher_dst = Path(self.serverdir, self.servername + '.jar')
 
         if launcher_dst.exists():
             print('INFO: ' + str(launcher_dst) + ' exists, skipping symlink step.')
@@ -127,7 +127,7 @@ class UpdateConf:
 
         plugins = self.roleconf['plugins'] if 'plugins' in self.roleconf else {}
 
-        for plugin, plugin_conf in plugins:
+        for plugin, plugin_conf in plugins.items():
             if 'version' in plugin_conf:
                 version = plugin_conf['version']
             else:
@@ -305,27 +305,6 @@ class UpdateConf:
 
         write_func(conf_path, result_conf)
 
-    # Constructs a complete conf dictionary based on a given complete conf from a role dir
-    # Uses the roles section in the roleconf.json file to recursively build each subrole
-    # This function "resolves" the roles and hence the returned config won't return them
-    # Will run indefinitely if there are circular dependencies
-    def build_conf(self, base_conf: dict) -> dict:
-        roles = base_conf['roleconf.json']['roles'] if 'roles' in base_conf['roleconf.json'] else []
-        stripped_conf = copy.deepcopy(base_conf)
-        del stripped_conf['roleconf.json']['roles']
-
-        subconfs = []
-        for role in roles:
-            confpath = Path(self.roles_dir, role)
-            if not confpath.exists():
-                print('ERROR: ' + str(confpath) + ' does not exist')
-                raise FileNotFoundError
-            subconf = f2d.fs2dict(confpath)
-            subconfs.append(self.build_conf(subconf))
-
-        final_conf = dc.merge_many_dicts([*subconfs, stripped_conf])
-        return final_conf
-
     # Takes a list of roles and returns a list of dicts containing the roleconf for each role
     def get_roleconfs(self, roles: list) -> [dict]:
         roleconfs = []
@@ -336,6 +315,8 @@ class UpdateConf:
                 raise FileNotFoundError(confpath)
 
             roleconfs.append(d2d.dir2dict(confpath))
+
+        return roleconfs
 
     # Read and write helpers
     @staticmethod
