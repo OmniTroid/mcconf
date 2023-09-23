@@ -12,7 +12,7 @@ import configparser
 import requests
 
 import dictcombiner.dictcombiner as dc
-import fs2dict as f2d
+import dir2dict as d2d
 
 
 class UpdateConf:
@@ -323,8 +323,19 @@ class UpdateConf:
             subconf = f2d.fs2dict(confpath)
             subconfs.append(self.build_conf(subconf))
 
-        final_conf = dc.combine_dicts([*subconfs, stripped_conf])
+        final_conf = dc.merge_many_dicts([*subconfs, stripped_conf])
         return final_conf
+
+    # Takes a list of roles and returns a list of dicts containing the roleconf for each role
+    def get_roleconfs(self, roles: list) -> [dict]:
+        roleconfs = []
+
+        for role in roles:
+            confpath = Path(self.roles_dir, role)
+            if not confpath.exists():
+                raise FileNotFoundError(confpath)
+
+            roleconfs.append(d2d.dir2dict(confpath))
 
     # Read and write helpers
     @staticmethod
