@@ -135,7 +135,7 @@ class UpdateConf:
             # Use the newest plugin in the plugin folder
             newest_plugin = sorted(
                 (file for file in plugin_srcdir.iterdir()),
-                key=lambda x: x.stat().st_mtime)[-1]
+                key=lambda x: x.stat().st_mtime)[-1].name
 
             plugin_src = Path(plugin_srcdir, newest_plugin)
             plugin_dst = Path(server_plugin_dir, newest_plugin)
