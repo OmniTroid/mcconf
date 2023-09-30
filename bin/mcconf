@@ -1,1 +1,24 @@
-../mcconf.py
+#!/bin/bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+
+# if ROOT_DIR/venv does not exist, create it
+if [ ! -d "$ROOT_DIR/venv" ]; then
+    echo "Virtual environment does not exist, creating..."
+    python3 -m venv "$ROOT_DIR/venv"
+    # install packages
+    echo "Installing packages..."
+    "${ROOT_DIR}/venv/bin/pip" install -r "${ROOT_DIR}/requirements.txt"
+fi
+
+PYTHON_BIN="${ROOT_DIR}/venv/bin/python3"
+MCCONF_SCRIPT="${ROOT_DIR}/mcconf.py"
+
+# run the script
+"${PYTHON_BIN}" "${MCCONF_SCRIPT}" "$@"
+
+# Exit with last exit code (from the python script)
+exit $?
