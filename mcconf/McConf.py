@@ -54,6 +54,7 @@ class McConf:
         roleconfs = self.get_roleconfs(self.roles)
         self.complete_conf = dc.merge_dicts(roleconfs)
         self.roleconf = self.complete_conf['roleconf.json']
+        self.fileconf = self.complete_conf['conf']
 
     def init_server(self):
         if self.serverdir.exists():
@@ -223,14 +224,13 @@ class McConf:
         self.update_bukkit_yml()
         self.update_spigot_yml()
         self.update_paper_yml()
-
-    # self.update_plugin_confs()
+        # self.update_plugin_confs()
 
     def update_server_properties(self):
         baseconf_path = Path(self.serverdir, 'server.properties')
-        if 'server.properties' not in self.conf:
+        if 'server.properties' not in self.fileconf:
             return
-        delta_conf = self.conf['server.properties']
+        delta_conf = self.fileconf['server.properties']
         self.update_conf(
             baseconf_path, delta_conf,
             self.read_properties_file, self.write_properties_file)
@@ -245,19 +245,10 @@ class McConf:
         self.update_core_yml('paper')
 
     def update_plugin_confs(self):
-        plugins_conf_dir = Path(self.confdir, 'plugins')
+        configured_plugins = self.roleconf['plugins']
 
-        if not plugins_conf_dir.exists():
-            print('INFO: ' + str(plugins_conf_dir) + ' not found, skipping')
-            return
-
-        for dir_ in plugins_conf_dir.iterdir():
+        for plugin_name, config in configured_plugins.items():
             pass
-            # TODO: Add exceptions for plugins that dont have config.yml
-
-            # conf_dir = Path(dir_)
-            # conf_name = 'config.yml'
-            # baseconf_path = Path(self.serverdir, 'plugins', conf_dir.name, 'config.yml')
 
     # Wrapper for updating core yml files (bukkit.yml, spigot.yml etc.)
     def update_core_yml(self, name: str):
