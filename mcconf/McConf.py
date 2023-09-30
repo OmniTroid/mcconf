@@ -229,6 +229,7 @@ class McConf:
     def update_server_properties(self):
         baseconf_path = Path(self.serverdir, 'server.properties')
         if 'server.properties' not in self.fileconf:
+            # Since we have no server.properties in config, there is nothing to update, so return with no error
             return
         delta_conf = self.fileconf['server.properties']
         self.update_conf(
