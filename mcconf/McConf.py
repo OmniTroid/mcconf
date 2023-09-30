@@ -293,7 +293,7 @@ class McConf:
         else:
             baseconf = read_func(conf_path)
 
-        result_conf = dc.combine_dicts([baseconf, delta_conf])
+        result_conf = dc.merge_dicts([baseconf, delta_conf])
 
         if not original_path.exists():
             conf_path.rename(original_path)
