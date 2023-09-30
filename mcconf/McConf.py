@@ -256,10 +256,10 @@ class McConf:
         full_name = name + '.yml'
         core_yml_path = Path(self.serverdir, full_name)
 
-        if full_name not in self.conf:
+        if full_name not in self.fileconf:
             return
 
-        delta_conf = self.conf[full_name]
+        delta_conf = self.fileconf[full_name]
 
         self.update_conf(
             core_yml_path, delta_conf,
