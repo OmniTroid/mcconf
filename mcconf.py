@@ -32,16 +32,18 @@ Should be a json file which at least includes a list of roles to use.',
 	parser.add_argument(
 		dest='action',
 		metavar='[action]',
-		help='Action to take. Valid actions: init, update')
+		help='Action to take. Valid actions: init, init2, update')
 
 	args = vars(parser.parse_args())
 
 	mco = mcconf.McConf(args)
 
 	if args['action'] == 'init':
-		mco.init_server()
+		mco.init()
+	elif args['action'] == 'init2':
+		mco.init2()
 	elif args['action'] == 'update':
-		mco.update_all()
+		mco.update()
 	else:
 		print('Unknown action: ' + args['action'])
 

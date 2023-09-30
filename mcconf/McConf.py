@@ -56,7 +56,8 @@ class McConf:
         self.roleconf = self.complete_conf['roleconf.json']
         self.fileconf = self.complete_conf['conf']
 
-    def init_server(self):
+    # Invoked directly from terminal
+    def init(self):
         if self.serverdir.exists():
             raise FileExistsError(self.serverdir)
 
@@ -66,9 +67,45 @@ class McConf:
         self.init_plugins()
         self.make_start_script()
 
-        print('Done! Now run the start script to generate the initial state')
+        print('Done! Now run the start script to generate the initial state, then run init2')
 
-    # initserver functions #
+    # HACK: Optimally, we want to generate the initial state in the init_server function
+    # But as of today, we haven't succeeded into launching and stopping the server from python
+    # So we have to do it manually for now. That is, run init, then run start.sh, then run init2
+    def init2(self):
+        print('Running step 2 of init')
+        for filename, conf in self.fileconf.items():
+            existing_conf_path = Path(self.serverdir, filename)
+
+            # Here we make the assumption that all generated config modifies existing config
+            # This assumption may not hold in the future
+            if not existing_conf_path.exists():
+                logging.warning(f'{filename} exists in config, but not in filesystem. Skipping.')
+                continue
+
+            if existing_conf_path.is_file():
+                # TODO: Here we should call some generic "process" function that detects extension and calls the appropriate function
+                pass
+            elif existing_conf_path.is_dir():
+                # TODO: Need to do some fancy recursive stuff here
+                pass
+            else:
+                # Of course, no program is complete without "This should never happen" :v)
+                raise Exception(f'{filename} is not a file or directory. This should never happen.')
+
+    # Invoked directly from terminal
+    def update(self):
+        # For each managed config, we need to generate the new config
+        # Then we should display a diff and ask for confirmation
+        # Then we should write the new config, if approved
+
+        self.update_server_properties()
+        self.update_bukkit_yml()
+        self.update_spigot_yml()
+        self.update_paper_yml()
+        # self.update_plugin_confs()
+
+# Init functions
 
     def make_serverdir(self):
         print('### Make server directory')
@@ -218,14 +255,6 @@ class McConf:
         print('Initial generation complete.')
 
     # Update functions
-
-    def update_all(self):
-        self.update_server_properties()
-        self.update_bukkit_yml()
-        self.update_spigot_yml()
-        self.update_paper_yml()
-        # self.update_plugin_confs()
-
     def update_server_properties(self):
         baseconf_path = Path(self.serverdir, 'server.properties')
         if 'server.properties' not in self.fileconf:
@@ -285,13 +314,10 @@ class McConf:
 
         original_path = Path(conf_path.parent, 'original_' + conf_path.name)
 
-        # Use the original file if we have it
-        # This means the script has been run before
-        # This ensures idempotency
-        if original_path.exists():
-            baseconf = read_func(original_path)
-        else:
-            baseconf = read_func(conf_path)
+        if not original_path.exists():
+            shutil.copy(conf_path, original_path)
+
+        baseconf = read_func(conf_path)
 
         result_conf = dc.merge_dicts([baseconf, delta_conf])
 
