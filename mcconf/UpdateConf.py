@@ -4,6 +4,7 @@ import subprocess
 from pathlib import Path
 from typing import Callable
 import logging
+import shutil
 
 import yaml
 import json
@@ -125,21 +126,26 @@ class UpdateConf:
         plugins = self.roleconf['plugins'] if 'plugins' in self.roleconf else {}
 
         for plugin, plugin_conf in plugins.items():
-            if 'version' in plugin_conf:
-                version = plugin_conf['version']
-            else:
-                version = 'latest'
+            plugin_srcdir = Path(self.coreconf['plugin_dir'], plugin)
 
-            plugin_src = Path(self.coreconf['plugin_dir'], plugin, version + '.jar')
-            plugin_dst = Path(server_plugin_dir, plugin + '.jar')
+            if not plugin_srcdir.exists():
+                print(f'WARNING: {plugin_srcdir} does not exist. Skipping plugin {plugin}')
+                continue
 
-            if not plugin_src.exists():
-                print('WARNING: ' + str(plugin_src) + ' does not exist')
+            # Use the newest plugin in the plugin folder
+            newest_plugin = sorted(
+                (file for file in plugin_srcdir.iterdir()),
+                key=lambda x: x.stat().st_mtime)[-1]
+
+            plugin_src = Path(plugin_srcdir, newest_plugin)
+            plugin_dst = Path(server_plugin_dir, newest_plugin)
 
             if plugin_dst.exists():
-                print('INFO: plugin symlink ' + str(plugin_dst) + ' exists, skipping.')
-            else:
-                os.symlink(plugin_src, plugin_dst)
+                logging.info(f'WARNING: plugin symlink {plugin_dst} exists, skipping.')
+                continue
+
+            # TODO: We should write the filename to a lockfile so we can check and update it later
+            shutil.copy(plugin_src, plugin_dst)
 
     # Download and modify start script
     def make_start_script(self):
