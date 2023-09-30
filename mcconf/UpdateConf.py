@@ -20,7 +20,7 @@ class UpdateConf:
         import coreconf
         self.coreconf = coreconf.coreconf
         self.java_dir = Path(self.coreconf['java_dir'])
-        self.plugin_dir = Path(self.coreconf['plugin_dir'])
+        self.bukkit_plugin_dir = Path(self.coreconf['bukkit_plugin_dir'])
         self.launcher_dir = Path(self.coreconf['launcher_dir'])
         self.roles_dir = Path(self.coreconf['roles_dir'])
 
@@ -126,7 +126,7 @@ class UpdateConf:
         plugins = self.roleconf['plugins'] if 'plugins' in self.roleconf else {}
 
         for plugin, plugin_conf in plugins.items():
-            plugin_srcdir = Path(self.coreconf['plugin_dir'], plugin)
+            plugin_srcdir = Path(self.coreconf['bukkit_plugin_dir'], plugin)
 
             if not plugin_srcdir.exists():
                 print(f'WARNING: {plugin_srcdir} does not exist. Skipping plugin {plugin}')
