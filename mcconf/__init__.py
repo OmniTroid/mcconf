@@ -1,2 +1,2 @@
 from .PluginConf import PluginConf
-from .UpdateConf import UpdateConf
+from .McConf import McConf

@@ -15,7 +15,7 @@ import dictcombiner.dictcombiner as dc
 import dir2dict as d2d
 
 
-class UpdateConf:
+class McConf:
     def __init__(self, args: {}):
         import coreconf
         self.coreconf = coreconf.coreconf
