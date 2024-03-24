@@ -67,7 +67,7 @@ class McConf:
         self.init_plugins()
         self.make_start_script()
 
-        print('Done! Now run the start script to generate the initial state, then run init2')
+        print('Done! Now run start.sh script to generate the initial state, then run init2')
 
     # HACK: Optimally, we want to generate the initial state in the init_server function
     # But as of today, we haven't succeeded into launching and stopping the server from python
@@ -96,18 +96,6 @@ class McConf:
             else:
                 # Of course, no program is complete without "This should never happen" :v)
                 raise Exception(f'{filename} is not a file or directory. This should never happen.')
-
-    # Invoked directly from terminal
-    def update(self):
-        # For each managed config, we need to generate the new config
-        # Then we should display a diff and ask for confirmation
-        # Then we should write the new config, if approved
-
-        self.update_server_properties()
-        self.update_bukkit_yml()
-        self.update_spigot_yml()
-        self.update_paper_yml()
-        # self.update_plugin_confs()
 
 # Init functions
 
@@ -257,46 +245,6 @@ class McConf:
         child_process.kill()
 
         print('Initial generation complete.')
-
-    # Update functions
-    def update_server_properties(self):
-        baseconf_path = Path(self.serverdir, 'server.properties')
-        if 'server.properties' not in self.fileconf:
-            # Since we have no server.properties in config, there is nothing to update, so return with no error
-            return
-        delta_conf = self.fileconf['server.properties']
-        self.update_conf(
-            baseconf_path, delta_conf,
-            self.read_properties_file, self.write_properties_file)
-
-    def update_bukkit_yml(self):
-        self.update_core_yml('bukkit')
-
-    def update_spigot_yml(self):
-        self.update_core_yml('spigot')
-
-    def update_paper_yml(self):
-        self.update_core_yml('paper')
-
-    def update_plugin_confs(self):
-        configured_plugins = self.roleconf['plugins']
-
-        for plugin_name, config in configured_plugins.items():
-            pass
-
-    # Wrapper for updating core yml files (bukkit.yml, spigot.yml etc.)
-    def update_core_yml(self, name: str):
-        full_name = name + '.yml'
-        core_yml_path = Path(self.serverdir, full_name)
-
-        if full_name not in self.fileconf:
-            return
-
-        delta_conf = self.fileconf[full_name]
-
-        self.update_conf(
-            core_yml_path, delta_conf,
-            self.read_yml, self.write_yml)
 
     # Updates the file given by conf_path based on the content of delta_conf
     # conf_path = the path to the config to update
