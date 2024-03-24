@@ -80,7 +80,7 @@ class McConf:
             # Here we make the assumption that all generated config modifies existing config
             # This assumption may not hold in the future
             if not existing_conf_path.exists():
-                logging.warning(f'{filename} exists in config, but not in filesystem. Skipping.')
+                logging.warning(f'{filename} exists in config, but not in server. Skipping.')
                 continue
 
             if existing_conf_path.is_file():
