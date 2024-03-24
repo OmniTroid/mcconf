@@ -74,6 +74,7 @@ class McConf:
     # So we have to do it manually for now. That is, run init, then run start.sh, then run init2
     def init2(self):
         print('Running step 2 of init')
+        rw_functions = McConf.get_readwrite_functions()
         for filename, conf in self.fileconf.items():
             existing_conf_path = Path(self.serverdir, filename)
 
@@ -84,10 +85,13 @@ class McConf:
                 continue
 
             if existing_conf_path.is_file():
-                # TODO: Here we should call some generic "process" function that detects extension and calls the appropriate function
+                extension = existing_conf_path.suffix[1:]
+                read_func, write_func = rw_functions[extension]
+                self.update_conf(existing_conf_path, conf, read_func, write_func)
                 pass
             elif existing_conf_path.is_dir():
                 # TODO: Need to do some fancy recursive stuff here
+                logging.warning('Not yet implemented')
                 pass
             else:
                 # Of course, no program is complete without "This should never happen" :v)
@@ -338,6 +342,13 @@ class McConf:
             roleconfs.append(d2d.dir2dict(confpath))
 
         return roleconfs
+
+    @staticmethod
+    def get_readwrite_functions():
+        return {
+            'properties': (McConf.read_properties_file, McConf.write_properties_file),
+            'yml': (McConf.read_yml, McConf.write_yml)
+        }
 
     # Read and write helpers
     @staticmethod
