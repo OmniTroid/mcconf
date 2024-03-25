@@ -3,7 +3,10 @@
 # This script takes an existing Minecraft server and
 # updates the config based on the
 
+import os
 import argparse
+
+import dotenv
 
 import mcconf
 
@@ -30,11 +33,21 @@ Should be a json file which at least includes a list of roles to use.',
 		help='Just print commands, do not actually run anything',
 		action='store_true')
 	parser.add_argument(
+		'--envfile',
+		dest='envfile',
+		metavar='[envfile]',
+		help='Path to an envfile to load')
+	parser.add_argument(
 		dest='action',
 		metavar='[action]',
 		help='Action to take. Valid actions: init, init2, update')
 
 	args = vars(parser.parse_args())
+
+	if 'envfile' in args:
+		dotenv.load_dotenv(args['envfile'])
+
+	envvars = os.environ
 
 	mco = mcconf.McConf(args)
 

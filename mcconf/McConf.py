@@ -263,6 +263,8 @@ class McConf:
             logging.error(str(conf_path) + ' not found.')
             return
 
+        McConf.replace_envs(delta_conf)
+
         print('Applying following conf to ' + str(conf_path))
         print(json.dumps(delta_conf, indent=4))
 
@@ -306,20 +308,20 @@ class McConf:
     # Read and write helpers
     @staticmethod
     def read_properties_file(path: Path) -> dict:
-        # HACK: so server.properties actually lacks the section header.
-        # configparse doesn't like this so we have to hack around that.
-        conf_str = '[default]\n'
-
         with open(path) as file:
-            data = file.read()
-            conf_str = conf_str + data
+            conf_str = file.read()
 
-            tmp_conf = configparser.ConfigParser()
-            tmp_conf.read_string(conf_str)
+        # HACK: so Minecraft's server.properties actually lacks the section header.
+        # configparse doesn't like this so we have to hack around that.
+        if '[default]' not in conf_str:
+            conf_str = '[default]\n' + conf_str
 
-            conf = dict(tmp_conf.items('default'))
+        tmp_conf = configparser.ConfigParser()
+        tmp_conf.read_string(conf_str)
 
-            return conf
+        conf = dict(tmp_conf.items('default'))
+
+        return conf
 
     @staticmethod
     def write_properties_file(path: Path, data: dict):
@@ -340,3 +342,22 @@ class McConf:
     def write_yml(path: Path, data: dict):
         with open(path, 'w') as file:
             file.write(yaml.dump(data))
+
+    # Replaces all envvars in the data dict with their corresponding values
+    # In place, has no return value
+    @staticmethod
+    def replace_envs(data: dict):
+        for key, value in data.items():
+            if isinstance(value, str) and '{{' in value and '}}' in value:
+                # Find value between {{ and }}
+                envvar_key = value.split('{{')[1].split('}}')[0]
+                envvar_value = os.getenv(envvar_key)
+                if envvar_value is None or envvar_value == '':
+                    logging.error(f'Environment variable {envvar_key} not found')
+                    continue
+
+                # Create variable new_value which replaces the envvar with the value
+                new_value = value.replace('{{' + envvar_key + '}}', envvar_value)
+                data[key] = new_value
+            elif isinstance(value, dict):
+                McConf.replace_envs(value)
