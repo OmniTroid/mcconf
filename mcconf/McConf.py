@@ -55,6 +55,12 @@ class McConf:
         self.complete_conf = dc.merge_dicts(roleconfs)
         self.roleconf = self.complete_conf['roleconf.json']
         self.fileconf = self.complete_conf['conf']
+        # Ask before applying each change
+        self.prompt_changes = True
+        self.rw_functions = {
+            'properties': (McConf.read_properties_file, McConf.write_properties_file),
+            'yml': (McConf.read_yml, McConf.write_yml)
+        }
 
     # Invoked directly from terminal
     def init(self):
@@ -74,9 +80,14 @@ class McConf:
     # So we have to do it manually for now. That is, run init, then run start.sh, then run init2
     def init2(self):
         print('Running step 2 of init')
-        rw_functions = McConf.get_readwrite_functions()
-        for filename, conf in self.fileconf.items():
-            existing_conf_path = Path(self.serverdir, filename)
+        self.update_recursively(self.fileconf, self.serverdir)
+
+    # Update the server based on the serverconf
+    # Run recursively. Take conf as argument, which is a dict consisting of
+    # Filenames as keys and the conf to apply as values
+    def update_recursively(self, fileconf: dict, path: Path):
+        for filename, conf in fileconf.items():
+            existing_conf_path = Path(path, filename)
 
             # Here we make the assumption that all generated config modifies existing config
             # This assumption may not hold in the future
@@ -86,16 +97,10 @@ class McConf:
 
             if existing_conf_path.is_file():
                 extension = existing_conf_path.suffix[1:]
-                read_func, write_func = rw_functions[extension]
+                read_func, write_func = self.rw_functions[extension]
                 self.update_conf(existing_conf_path, conf, read_func, write_func)
-                pass
             elif existing_conf_path.is_dir():
-                # TODO: Need to do some fancy recursive stuff here
-                logging.warning('Not yet implemented')
-                pass
-            else:
-                # Of course, no program is complete without "This should never happen" :v)
-                raise Exception(f'{filename} is not a file or directory. This should never happen.')
+                self.update_recursively(conf, existing_conf_path)
 
 # Init functions
 
@@ -254,15 +259,22 @@ class McConf:
     def update_conf(self, conf_path: Path, delta_conf: dict,
                     read_func: Callable, write_func: Callable):
 
-        print('Applying conf to ' + str(conf_path))
+        if not conf_path.exists():
+            logging.error(str(conf_path) + ' not found.')
+            return
+
+        print('Applying following conf to ' + str(conf_path))
+        print(json.dumps(delta_conf, indent=4))
 
         if self.dry_run:
-            print(json.dumps(delta_conf, indent=4))
+            print('Dry run. Skipping...')
             return
 
-        if not conf_path.exists():
-            print('ERROR: ' + str(conf_path) + ' not found.')
-            return
+        if self.prompt_changes:
+            response = input('Apply changes? [y/n] ')
+            if response != 'y':
+                print('Skipping...')
+                return
 
         original_path = Path(conf_path.parent, 'original_' + conf_path.name)
 
@@ -290,13 +302,6 @@ class McConf:
             roleconfs.append(d2d.dir2dict(confpath))
 
         return roleconfs
-
-    @staticmethod
-    def get_readwrite_functions():
-        return {
-            'properties': (McConf.read_properties_file, McConf.write_properties_file),
-            'yml': (McConf.read_yml, McConf.write_yml)
-        }
 
     # Read and write helpers
     @staticmethod
