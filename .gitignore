@@ -4,3 +4,4 @@ coreconf.py
 tests/*
 /venv/
 /.idea/
+.env
