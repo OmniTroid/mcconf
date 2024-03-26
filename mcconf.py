@@ -47,8 +47,6 @@ Should be a json file which at least includes a list of roles to use.',
 	if 'envfile' in args:
 		dotenv.load_dotenv(args['envfile'])
 
-	envvars = os.environ
-
 	mco = mcconf.McConf(args)
 
 	if args['action'] == 'init':
