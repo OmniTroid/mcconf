@@ -7,13 +7,12 @@ import logging
 import shutil
 import copy
 
-import yaml
 import json
-import configparser
 import requests
 
 import dictcombiner.dictcombiner as dc
 import dir2dict as d2d
+from rw_functions import rw_functions
 
 
 class McConf:
@@ -52,16 +51,12 @@ class McConf:
 
             self.role_dirs.append(role_dir)
 
-        roleconfs = self.get_roleconfs(self.roles)
-        self.complete_conf = dc.merge_dicts(roleconfs)
+        # roleconfs = self.get_roleconfs(self.roles)
+        # self.complete_conf = dc.merge_dicts(roleconfs)
         self.roleconf = self.complete_conf['roleconf.json']
         self.fileconf = self.complete_conf['conf']
         # Ask before applying each change
         self.prompt_changes = True
-        self.rw_functions = {
-            'properties': (McConf.read_properties_file, McConf.write_properties_file),
-            'yml': (McConf.read_yml, McConf.write_yml)
-        }
 
     # Invoked directly from terminal
     def init(self):
@@ -74,13 +69,13 @@ class McConf:
         self.init_plugins()
         self.make_start_script()
 
-        print('Done! Now run start.sh script to generate the initial state, then run init2')
+        print('Done! Now run start.sh script to generate the initial state, then run update')
 
     # HACK: Optimally, we want to generate the initial state in the init_server function
     # But as of today, we haven't succeeded into launching and stopping the server from python
-    # So we have to do it manually for now. That is, run init, then run start.sh, then run init2
-    def init2(self):
-        print('Running step 2 of init')
+    # So we have to do it manually for now. That is, run init, then run start.sh, then run update
+    def update(self):
+        print('Running update')
         self.update_recursively(self.fileconf, self.serverdir)
 
     # Update the server based on the serverconf
@@ -98,7 +93,7 @@ class McConf:
 
             if existing_conf_path.is_file():
                 extension = existing_conf_path.suffix[1:]
-                read_func, write_func = self.rw_functions[extension]
+                read_func, write_func = rw_functions[extension]
                 self.update_conf(existing_conf_path, conf, read_func, write_func)
             elif existing_conf_path.is_dir():
                 self.update_recursively(conf, existing_conf_path)
@@ -299,6 +294,14 @@ class McConf:
 
         write_func(conf_path, result_conf)
 
+    # Loads a complete config from a path
+    def load_conf(self, path: Path) -> dict:
+        if not path.exists():
+            raise FileNotFoundError(path)
+
+        conf = d2d.dir2dict(path)
+        return conf
+
     # Takes a list of roles and returns a list of dicts containing the roleconf for each role
     def get_roleconfs(self, roles: list) -> [dict]:
         roleconfs = []
@@ -311,44 +314,6 @@ class McConf:
             roleconfs.append(d2d.dir2dict(confpath))
 
         return roleconfs
-
-    # Read and write helpers
-    @staticmethod
-    def read_properties_file(path: Path) -> dict:
-        with open(path) as file:
-            conf_str = file.read()
-
-        # HACK: so Minecraft's server.properties actually lacks the section header.
-        # configparse doesn't like this so we have to hack around that.
-        if '[default]' not in conf_str:
-            conf_str = '[default]\n' + conf_str
-
-        tmp_conf = configparser.ConfigParser()
-        tmp_conf.read_string(conf_str)
-
-        conf = dict(tmp_conf.items('default'))
-
-        return conf
-
-    @staticmethod
-    def write_properties_file(path: Path, data: dict):
-        with open(path, 'w') as file:
-            tmp_dict = {'default': data}
-            tmp_conf = configparser.ConfigParser()
-            tmp_conf.read_dict(tmp_dict)
-            tmp_conf.write(file)
-
-    @staticmethod
-    def read_yml(path: Path) -> dict:
-        with open(path) as file:
-            data = yaml.safe_load(file)
-
-        return data
-
-    @staticmethod
-    def write_yml(path: Path, data: dict):
-        with open(path, 'w') as file:
-            file.write(yaml.dump(data))
 
     # Replaces all envvars in the data dict with their corresponding values
     # In place, has no return value

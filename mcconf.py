@@ -51,8 +51,6 @@ Should be a json file which at least includes a list of roles to use.',
 
 	if args['action'] == 'init':
 		mco.init()
-	elif args['action'] == 'init2':
-		mco.init2()
 	elif args['action'] == 'update':
 		mco.update()
 	else:
