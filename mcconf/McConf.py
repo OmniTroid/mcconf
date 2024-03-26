@@ -285,7 +285,12 @@ class McConf:
 
         baseconf = read_func(conf_path)
 
-        result_conf = dc.merge_dicts([baseconf, delta_conf])
+        diff = McConf.dict_diff(delta_conf, baseconf)
+        if diff == {}:
+            print('No changes to apply')
+            return
+
+        result_conf = dc.merge_dicts([baseconf, diff])
 
         if not original_path.exists():
             conf_path.rename(original_path)
@@ -361,3 +366,30 @@ class McConf:
                 data[key] = new_value
             elif isinstance(value, dict):
                 McConf.replace_envs(value)
+
+    @staticmethod
+    def dict_diff(dict_a: {}, dict_b: {}) -> {}:
+        """
+        Compares dict_a and dict_b. Returns the difference. Return a dict with a key and value for
+        each value that is different. See the tests for a demonstration how this should work.
+        Essentially, check if dict_a is a strict subset of dict_b, and return the difference
+        Keys that aren't in both a and b are ignored
+        :param dict_a:
+        :param dict_b:
+        :return: dict
+        """
+        diff = {}
+        for key, value in dict_a.items():
+            if key in dict_b:
+                if isinstance(value, dict):
+                    # Sanity check
+                    if not isinstance(dict_b[key], dict):
+                        logging.error(f'Type mismatch between dicts with key {key}')
+                        continue
+                    subdiff = McConf.dict_diff(value, dict_b[key])
+                    if subdiff != {}:
+                        diff[key] = subdiff
+                elif value != dict_b[key]:
+                    diff[key] = value
+
+        return diff
