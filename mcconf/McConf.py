@@ -185,8 +185,7 @@ class McConf:
 
         response = requests.get(
             # 'http://tiny.cc/mcstart',
-            """https://gist.githubusercontent.com/OmniTroid/267730675631383ce3651155405b3474\
-            /raw/95bc84a677df065ebe032eeda5db5c2b72438d59/start.sh""",
+            """https://gist.githubusercontent.com/OmniTroid/267730675631383ce3651155405b3474/raw""",
             headers={'User-Agent': 'mcconf'})
 
         if response.status_code != 200:
