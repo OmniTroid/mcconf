@@ -68,16 +68,18 @@ def dict_diff(whole_dict: {}, subset_dict: {}) -> {}:
     """
     diff = {}
     for key, value in subset_dict.items():
-        if key in whole_dict:
-            if isinstance(value, dict):
-                # Sanity check
-                if not isinstance(whole_dict[key], dict):
-                    logging.error(f'Type mismatch between dicts with key {key}')
-                    continue
-                subdiff = dict_diff(whole_dict[key], value)
-                if subdiff != {}:
-                    diff[key] = subdiff
-            elif value != whole_dict[key]:
-                diff[key] = value
+        if key not in whole_dict:
+            print(f'Warning: subset dict {key} not found in whole_dict')
+            continue
+        if isinstance(value, dict):
+            # Sanity check
+            if not isinstance(whole_dict[key], dict):
+                logging.error(f'Type mismatch between dicts with key {key}')
+                continue
+            subdiff = dict_diff(whole_dict[key], value)
+            if subdiff != {}:
+                diff[key] = subdiff
+        elif value != whole_dict[key]:
+            diff[key] = value
 
     return diff
