@@ -11,7 +11,7 @@ import json
 import requests
 
 import dictcombiner.dictcombiner as dc
-import dir2dict as d2d
+import utils
 from rw_functions import rw_functions
 
 
@@ -32,29 +32,12 @@ class McConf:
 
         self.start_path = self.serverdir / 'start.sh'
 
-        if not self.roles_dir.is_dir():
-            logging.error(str(self.roles_dir) + ' is not a directory')
-            raise NotADirectoryError
-
         if not self.serverdir.exists() and self.action != 'init':
             logging.error(str(self.serverdir) + ' is not a directory and action is not init')
             raise NotADirectoryError
 
-        self.roles = json.loads(self.serverconf_path.read_text())['roles']
-        self.role_dirs = []
-
-        for role in self.roles:
-            role_dir = self.roles_dir / role
-            if not role_dir.is_dir():
-                logging.error(str(role) + ' is not a directory')
-                raise NotADirectoryError
-
-            self.role_dirs.append(role_dir)
-
-        # roleconfs = self.get_roleconfs(self.roles)
-        # self.complete_conf = dc.merge_dicts(roleconfs)
-        self.roleconf = self.complete_conf['roleconf.json']
-        self.fileconf = self.complete_conf['conf']
+        self.baseconf = utils.load_conf(self.serverconf_path / 'baseconf.json')
+        self.fileconf = utils.load_conf(self.serverconf_path / 'conf')
         # Ask before applying each change
         self.prompt_changes = True
 
@@ -120,11 +103,11 @@ class McConf:
 
         launcher_dir = Path(
             self.coreconf['launcher_dir'],
-            self.roleconf['launcher']
+            self.baseconf['launcher']
         )
 
-        if 'launcher_version' in self.roleconf:
-            launcher_file = self.roleconf['launcher_version'] + '.jar'
+        if 'launcher_version' in self.baseconf:
+            launcher_file = self.baseconf['launcher_version'] + '.jar'
         # If there is no specific version, use the newest(latest) launcher
         else:
             launcher_file = sorted(
@@ -154,7 +137,7 @@ class McConf:
         if not server_plugin_dir.exists():
             server_plugin_dir.mkdir()
 
-        plugins = self.roleconf['plugins'] if 'plugins' in self.roleconf else {}
+        plugins = self.baseconf['plugins'] if 'plugins' in self.baseconf else {}
 
         for plugin, plugin_conf in plugins.items():
             plugin_srcdir = Path(self.coreconf['bukkit_plugin_dir'], plugin)
@@ -196,8 +179,8 @@ class McConf:
 
         start_script = response.text
 
-        if 'java_version' in self.roleconf:
-            java_version = self.roleconf['java_version']
+        if 'java_version' in self.baseconf:
+            java_version = self.baseconf['java_version']
         else:
             java_version = 'latest'
 
@@ -206,7 +189,7 @@ class McConf:
         if not java_path.exists():
             print('WARNING: ' + str(java_path) + ' does not exist')
 
-        memory = str(self.roleconf['memory'])
+        memory = str(self.baseconf['memory'])
         start_script = start_script.replace(
             'java', str(java_path)
         ).replace(
@@ -263,9 +246,9 @@ class McConf:
 
         # replace_envs replaces in-place so make a copy so we don't change the incoming args
         delta_conf = copy.deepcopy(delta_conf)
-        McConf.replace_envs(delta_conf)
+        utils.replace_envs(delta_conf)
 
-        diff = McConf.dict_diff(baseconf, delta_conf)
+        diff = utils.dict_diff(baseconf, delta_conf)
         if diff == {}:
             print(f'Config is up-to-date: {conf_path}')
             return
@@ -293,70 +276,3 @@ class McConf:
             shutil.copy(conf_path, original_path)
 
         write_func(conf_path, result_conf)
-
-    # Loads a complete config from a path
-    def load_conf(self, path: Path) -> dict:
-        if not path.exists():
-            raise FileNotFoundError(path)
-
-        conf = d2d.dir2dict(path)
-        return conf
-
-    # Takes a list of roles and returns a list of dicts containing the roleconf for each role
-    def get_roleconfs(self, roles: list) -> [dict]:
-        roleconfs = []
-
-        for role in roles:
-            confpath = Path(self.roles_dir, role)
-            if not confpath.exists():
-                raise FileNotFoundError(confpath)
-
-            roleconfs.append(d2d.dir2dict(confpath))
-
-        return roleconfs
-
-    # Replaces all envvars in the data dict with their corresponding values
-    # In place, has no return value
-    @staticmethod
-    def replace_envs(data: dict):
-        for key, value in data.items():
-            if isinstance(value, str) and '{{' in value and '}}' in value:
-                # Find value between {{ and }}
-                envvar_key = value.split('{{')[1].split('}}')[0]
-                envvar_value = os.getenv(envvar_key)
-                if envvar_value is None or envvar_value == '':
-                    logging.error(f'Environment variable {envvar_key} not found')
-                    continue
-
-                # Create variable new_value which replaces the envvar with the value
-                new_value = value.replace('{{' + envvar_key + '}}', envvar_value)
-                data[key] = new_value
-            elif isinstance(value, dict):
-                McConf.replace_envs(value)
-
-    @staticmethod
-    def dict_diff(whole_dict: {}, subset_dict: {}) -> {}:
-        """
-        Compares whole_dict and subset_dict. Returns the difference. Return a dict with a key and value for
-        each value that is different. See the tests for a demonstration how this should work.
-        Essentially, check if subset_dict is a strict subset of whole_dict, and return the difference
-        Keys that aren't in both a and b are ignored
-        :param subset_dict:
-        :param whole_dict:
-        :return: dict
-        """
-        diff = {}
-        for key, value in subset_dict.items():
-            if key in whole_dict:
-                if isinstance(value, dict):
-                    # Sanity check
-                    if not isinstance(whole_dict[key], dict):
-                        logging.error(f'Type mismatch between dicts with key {key}')
-                        continue
-                    subdiff = McConf.dict_diff(value, whole_dict[key])
-                    if subdiff != {}:
-                        diff[key] = subdiff
-                elif value != whole_dict[key]:
-                    diff[key] = value
-
-        return diff
