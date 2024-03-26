@@ -1,10 +1,8 @@
 import os
-import sys
 
-sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/..")
+from .. import utils
+
 script_dir = os.path.dirname(os.path.realpath(__file__))
-
-from McConf import McConf
 
 
 def test_single_diff():
@@ -25,7 +23,7 @@ def test_single_diff():
         }
     }
 
-    diff = McConf.dict_diff(full_conf, delta_conf)
+    diff = utils.dict_diff(full_conf, delta_conf)
     assert diff == {
         'server': {
             'properties': {
@@ -54,5 +52,5 @@ def test_identical():
         }
     }
 
-    diff = McConf.dict_diff(full_conf, delta_conf)
+    diff = utils.dict_diff(full_conf, delta_conf)
     assert diff == {}
