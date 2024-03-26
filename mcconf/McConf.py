@@ -285,7 +285,7 @@ class McConf:
 
         baseconf = read_func(conf_path)
 
-        diff = McConf.dict_diff(delta_conf, baseconf)
+        diff = McConf.dict_diff(baseconf, delta_conf)
         if diff == {}:
             print('No changes to apply')
             return
@@ -368,28 +368,28 @@ class McConf:
                 McConf.replace_envs(value)
 
     @staticmethod
-    def dict_diff(dict_a: {}, dict_b: {}) -> {}:
+    def dict_diff(whole_dict: {}, subset_dict: {}) -> {}:
         """
-        Compares dict_a and dict_b. Returns the difference. Return a dict with a key and value for
+        Compares whole_dict and subset_dict. Returns the difference. Return a dict with a key and value for
         each value that is different. See the tests for a demonstration how this should work.
-        Essentially, check if dict_a is a strict subset of dict_b, and return the difference
+        Essentially, check if subset_dict is a strict subset of whole_dict, and return the difference
         Keys that aren't in both a and b are ignored
-        :param dict_a:
-        :param dict_b:
+        :param subset_dict:
+        :param whole_dict:
         :return: dict
         """
         diff = {}
-        for key, value in dict_a.items():
-            if key in dict_b:
+        for key, value in subset_dict.items():
+            if key in whole_dict:
                 if isinstance(value, dict):
                     # Sanity check
-                    if not isinstance(dict_b[key], dict):
+                    if not isinstance(whole_dict[key], dict):
                         logging.error(f'Type mismatch between dicts with key {key}')
                         continue
-                    subdiff = McConf.dict_diff(value, dict_b[key])
+                    subdiff = McConf.dict_diff(value, whole_dict[key])
                     if subdiff != {}:
                         diff[key] = subdiff
-                elif value != dict_b[key]:
+                elif value != whole_dict[key]:
                     diff[key] = value
 
         return diff
