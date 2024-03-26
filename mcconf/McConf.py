@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Callable
 import logging
 import shutil
+import copy
 
 import yaml
 import json
@@ -263,7 +264,16 @@ class McConf:
             logging.error(str(conf_path) + ' not found.')
             return
 
+        baseconf = read_func(conf_path)
+
+        # replace_envs replaces in-place so make a copy so we don't change the incoming args
+        delta_conf = copy.deepcopy(delta_conf)
         McConf.replace_envs(delta_conf)
+
+        diff = McConf.dict_diff(baseconf, delta_conf)
+        if diff == {}:
+            print('No changes to apply')
+            return
 
         print('Applying following conf to ' + str(conf_path))
         print(json.dumps(delta_conf, indent=4))
@@ -278,22 +288,14 @@ class McConf:
                 print('Skipping...')
                 return
 
-        original_path = Path(conf_path.parent, 'original_' + conf_path.name)
-
-        if not original_path.exists():
-            shutil.copy(conf_path, original_path)
-
-        baseconf = read_func(conf_path)
-
-        diff = McConf.dict_diff(baseconf, delta_conf)
-        if diff == {}:
-            print('No changes to apply')
-            return
-
         result_conf = dc.merge_dicts([baseconf, diff])
 
+        original_path = Path(conf_path.parent, 'original_' + conf_path.name)
+
+        # If there is no original file, this is the first time mcconf has been run on this config file
+        # So make a backup of the original file
         if not original_path.exists():
-            conf_path.rename(original_path)
+            shutil.copy(conf_path, original_path)
 
         write_func(conf_path, result_conf)
 
