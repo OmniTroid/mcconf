@@ -269,7 +269,7 @@ class McConf:
             return
 
         print('Applying following conf to ' + str(conf_path))
-        print(json.dumps(delta_conf, indent=4))
+        print(json.dumps(diff, indent=4))
 
         if self.dry_run:
             print('Dry run. Skipping...')

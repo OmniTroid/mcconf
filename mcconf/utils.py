@@ -74,7 +74,7 @@ def dict_diff(whole_dict: {}, subset_dict: {}) -> {}:
                 if not isinstance(whole_dict[key], dict):
                     logging.error(f'Type mismatch between dicts with key {key}')
                     continue
-                subdiff = dict_diff(value, whole_dict[key])
+                subdiff = dict_diff(whole_dict[key], value)
                 if subdiff != {}:
                     diff[key] = subdiff
             elif value != whole_dict[key]:
