@@ -15,11 +15,11 @@ def main():
 	parser = argparse.ArgumentParser('Minecraft server config tool')
 
 	parser.add_argument(
-		'--serverconf',
-		dest='serverconf',
-		metavar='[serverconf]',
-		help='Path to the serverconf of the server to create. \
-Should be a json file which at least includes a list of roles to use.',
+		'--confdir',
+		dest='confdir',
+		metavar='[confdir]',
+		help='Path to the confdir of the server to create. \
+Should contain at least a baseconf.json. Can contain a conf directory.',
 		required=True)
 	parser.add_argument(
 		'--serverdir',

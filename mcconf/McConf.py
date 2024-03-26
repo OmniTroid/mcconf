@@ -11,8 +11,8 @@ import json
 import requests
 
 import dictcombiner.dictcombiner as dc
-import utils
-from rw_functions import rw_functions
+from . import utils
+from .rw_functions import rw_functions
 
 
 class McConf:
@@ -22,22 +22,37 @@ class McConf:
         self.java_dir = Path(self.coreconf['java_dir'])
         self.bukkit_plugin_dir = Path(self.coreconf['bukkit_plugin_dir'])
         self.launcher_dir = Path(self.coreconf['launcher_dir'])
-        self.roles_dir = Path(self.coreconf['roles_dir'])
 
         self.args = args
-        self.serverconf_path = Path(args['serverconf'])
+        self.confdir = Path(args['confdir'])
         self.serverdir = Path(args['serverdir'])
-        self.action = args['action']
         self.dry_run = args['dry_run']
+        self.action = args['action']
 
         self.start_path = self.serverdir / 'start.sh'
 
         if not self.serverdir.exists() and self.action != 'init':
-            logging.error(str(self.serverdir) + ' is not a directory and action is not init')
-            raise NotADirectoryError
+            logging.error(str(self.serverdir) + ' does not exist and action is not init')
+            raise FileNotFoundError
 
-        self.baseconf = utils.load_conf(self.serverconf_path / 'baseconf.json')
-        self.fileconf = utils.load_conf(self.serverconf_path / 'conf')
+        if not self.confdir.exists():
+            logging.error(str(self.confdir) + ' does not exist')
+            raise FileNotFoundError
+
+        baseconf_path = self.confdir / 'baseconf.json'
+
+        if not baseconf_path.exists():
+            logging.error(str(baseconf_path) + ' does not exist')
+            raise FileNotFoundError
+
+        self.baseconf = rw_functions['json'][0](self.confdir / 'baseconf.json')
+
+        fileconf_path = self.confdir / 'conf'
+        self.fileconf = {}
+        # The conf folder is technically optional
+        if fileconf_path.exists():
+            self.fileconf = utils.load_conf(fileconf_path)
+
         # Ask before applying each change
         self.prompt_changes = True
 

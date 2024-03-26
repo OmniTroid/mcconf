@@ -2,7 +2,7 @@ from pathlib import Path
 import logging
 import os
 
-from rw_functions import rw_functions as rf
+from .rw_functions import rw_functions as rf
 
 
 # Traverse the given directory and construct a dictionary that represents the file structure
@@ -18,8 +18,9 @@ def dir2dict(path: Path) -> dict:
             continue
 
         extension = child.name.split('.')[-1]
-        if extension in rf.formatparsers:
-            conf[child.name] = rf.formatparsers[extension](child)
+        if extension in rf:
+            # Call the read function for the extension
+            conf[child.name] = rf[extension][0](child)
             continue
         else:
             logging.warning(f"Unknown file extension: {extension}")
