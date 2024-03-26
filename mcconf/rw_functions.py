@@ -1,5 +1,6 @@
 from pathlib import Path
 import json
+import io
 
 import configparser
 import yaml
@@ -28,7 +29,12 @@ def write_properties_file(path: Path, data: dict):
         tmp_dict = {'default': data}
         tmp_conf = configparser.ConfigParser()
         tmp_conf.read_dict(tmp_dict)
-        tmp_conf.write(file)
+        buffer = io.StringIO()
+        tmp_conf.write(buffer)
+
+        # HACK: So it turns out that minecraft mangles valid .properties files by treating [default] as a key...
+        # need to do this terribleness to write a "minecraft-friendly" properties file.
+        file.write(buffer.getvalue().replace('[default]\n', ''))
 
 
 def read_yml(path: Path) -> dict:
