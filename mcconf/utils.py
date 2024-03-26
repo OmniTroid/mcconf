@@ -69,7 +69,6 @@ def dict_diff(whole_dict: {}, subset_dict: {}) -> {}:
     diff = {}
     for key, value in subset_dict.items():
         if key not in whole_dict:
-            print(f'Warning: subset dict {key} not found in whole_dict')
             continue
         if isinstance(value, dict):
             # Sanity check
