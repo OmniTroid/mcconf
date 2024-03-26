@@ -4,7 +4,6 @@ import sys
 #import mcconf.webfunctions as webfunctions
 from .Provider import Provider
 from .Spiget import Spiget
-from .Bukkit import Bukkit
 from .exceptions import *
 
 class PluginConf:

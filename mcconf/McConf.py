@@ -272,7 +272,7 @@ class McConf:
 
         diff = McConf.dict_diff(baseconf, delta_conf)
         if diff == {}:
-            print('No changes to apply')
+            print(f'Config is up-to-date: {conf_path}')
             return
 
         print('Applying following conf to ' + str(conf_path))
